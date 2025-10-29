@@ -1,0 +1,113 @@
+### **Prompt para crear el Endpoint de Búsqueda de Bienes**
+
+**Objetivo:** Crear un endpoint `GET /bienes/listar` que permita buscar bienes por un término de texto (`q`) y/o filtrarlos por su estatus.
+
+---
+
+#### **1. Definición del Endpoint**
+
+*   **Ruta:** `/bienes/listar`
+*   **Método:** `GET`
+*   **Parámetros de Query (Query Params):**
+    *   `q` (Opcional): Una cadena de texto para buscar coincidencias en campos como `serial`, `nombre`, o `descripcion`.
+    *   `estatus` (Opcional): Una cadena de texto para filtrar los bienes por un estatus específico (ej. "Disponible", "Asignado", "En Reparación").
+
+---
+
+#### **2. Lógica del Controlador (Pseudocódigo)**
+
+```
+funcion manejarListadoDeBienes(request, response):
+  // 1. Obtener los parámetros de la query
+  termino_busqueda = request.query.q
+  filtro_estatus = request.query.estatus
+
+  // 2. Construir la consulta a la base de datos
+  consulta_base = "SELECT * FROM bienes"
+  condiciones_where = []
+  parametros_consulta = []
+
+  // 3. Añadir condición para el término de búsqueda
+  si (termino_busqueda):
+    // Asumiendo que buscas en las columnas 'serial' y 'nombre'
+    condiciones_where.push("(serial LIKE ? OR nombre LIKE ?)")
+    parametros_consulta.push('%' + termino_busqueda + '%')
+    parametros_consulta.push('%' + termino_busqueda + '%')
+
+  // 4. Añadir condición para el estatus
+  si (filtro_estatus):
+    condiciones_where.push("estatus = ?")
+    parametros_consulta.push(filtro_estatus)
+
+  // 5. Unir las condiciones
+  si (condiciones_where.length > 0):
+    consulta_final = consulta_base + " WHERE " + condiciones_where.join(" AND ")
+  sino:
+    consulta_final = consulta_base
+
+  // 6. Ejecutar la consulta con los parámetros correspondientes
+  resultados = ejecutarConsulta(consulta_final, parametros_consulta)
+
+  // 7. Devolver la respuesta en formato JSON
+  // La respuesta debe tener una propiedad "items" que contenga el array de resultados.
+  response.json({
+    items: resultados
+  })
+```
+
+---
+
+#### **3. Ejemplo con Node.js, Express y SQL**
+
+Aquí tienes un ejemplo práctico si estuvieras usando un backend con Node.js y Express.
+
+```javascript
+// En tu archivo de rutas (ej. /routes/bienes.js)
+const express = require('express');
+const router = express.Router();
+const db = require('../db'); // Tu módulo de conexión a la base de datos
+
+router.get('/listar', async (req, res) => {
+  try {
+    const { q, estatus } = req.query;
+
+    let query = 'SELECT id, serial, nombre, estatus FROM bienes';
+    const params = [];
+    const whereClauses = [];
+
+    if (q) {
+      whereClauses.push('(serial LIKE ? OR nombre LIKE ?)');
+      params.push(`%${q}%`);
+      params.push(`%${q}%`);
+    }
+
+    if (estatus) {
+      whereClauses.push('estatus = ?');
+      params.push(estatus);
+    }
+
+    if (whereClauses.length > 0) {
+      query += ` WHERE ${whereClauses.join(' AND ')}`;
+    }
+
+    // Usando un pool de MySQL o similar
+    const [rows] = await db.promise().query(query, params);
+
+    res.json({ items: rows });
+
+  } catch (error) {
+    console.error("Error en el endpoint /bienes/listar:", error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+module.exports = router;
+```
+
+---
+
+**Consideraciones Adicionales:**
+
+*   **Seguridad:** Asegúrate de usar consultas parametrizadas (como en el ejemplo con `?`) para prevenir inyecciones SQL.
+*   **Indexación:** Para que las búsquedas sean rápidas, considera añadir índices en tu base de datos a las columnas por las que buscas con frecuencia (`serial`, `nombre`, `estatus`).
+*   **Paginación:** Para manejar grandes cantidades de datos, deberías añadir paginación a este endpoint (usando parámetros como `page` y `limit`).

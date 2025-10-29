@@ -7,6 +7,9 @@ import { useAccountStore } from '../stores/account'; // Asegúrate de importar e
 import RoleView from '@/views/RoleView.vue'
 import BienesView from '@/views/BienesView.vue'
 import PrestamosView from '@/views/PrestamosView.vue'
+import AsignacionView from '@/views/AsignacionView.vue'
+import DesincorporacionView from '@/views/DesincorporacionView.vue'
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -126,7 +129,22 @@ const router = createRouter({
       name: 'Prestámos',
       component: PrestamosView
     },
-
+    {
+      path: '/asignaciones',
+      name: 'asignaciones',
+      component: AsignacionView,
+      meta: {
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/desincorporaciones',
+      name: 'desincorporaciones',
+      component: DesincorporacionView,
+      meta: {
+        requiredAuth: true
+      }
+    },
 
   ]
 })

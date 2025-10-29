@@ -13,11 +13,11 @@ import { FontAwesomeIcon }  from "@fortawesome/vue-fontawesome";
 import { VueQueryPlugin }   from '@tanstack/vue-query'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
-
 import 'vue-step-progress/dist/main.css';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import './assets/css/tabler.css';
 import './assets/styles/styles.css'
+
 
 library.add(fas, fab);
 
@@ -25,6 +25,7 @@ const pinia = createPinia()
 const app = createApp(App)
 
 DataTable.use(DataTablesCore);
+
 app.use(router)
 app.use(pinia)
 app.use(VueQueryPlugin)

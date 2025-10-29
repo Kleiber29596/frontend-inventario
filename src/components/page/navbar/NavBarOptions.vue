@@ -22,7 +22,7 @@ import ItemsSub from './NavBarOptionsItemsSub.vue';
           data-bs-parent="#sidebar-menu"
         >
           <ul class="navbar-nav d-flex gap-1">
-            <Items class="mt-1" :icon="['fas', 'handshake']" name="Préstamos" routs="/prestamos" />
+            <Items class="mt-1" :icon="['fas', 'handshake']" name="Asignaciones" routs="/asignaciones" />
             <Items :icon="['fas', 'trash']" name="Desincorporaciones" routs="/desincorporaciones" />
             <Items :icon="['fas', 'people-arrows']" name="Reasignaciones" routs="/reasignaciones" />
           </ul>
