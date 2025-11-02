@@ -19,6 +19,7 @@ import './assets/css/tabler.css';
 import './assets/styles/styles.css'
 
 
+
 library.add(fas, fab);
 
 const pinia = createPinia()
@@ -31,5 +32,9 @@ app.use(pinia)
 app.use(VueQueryPlugin)
 app.use(VueSweetalert2)
 app.component("font-awesome-icon", FontAwesomeIcon)
+
+
+
+
 
 app.mount('#app')

@@ -26,7 +26,7 @@
                                         <th>Departamento</th>
                                         <th>Fecha de Inicio</th>
                                         <th>Estatus</th>
-                                        <th>Acciones</th>
+                                      
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -40,8 +40,14 @@
                                         <td>{{ asignacion.fecha_inicio }}</td>
                                         <td><span class="badge bg-success">{{ asignacion.estatus.descripcion }}</span></td>
                                         <td>
-                                            <button class="btn btn-sm btn-warning" @click="openModal(asignacion)">Editar</button>
-                                            <button class="btn btn-sm btn-info ms-2" @click="openDevolucionModal(asignacion)">Devolución</button>
+                                            <a class="btn btn-action" @click="openModal(asignacion)">
+                                            <IconEdit size="24" stroke-width="1.5" />
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a class="btn btn-action" @click="openDevolucionModal(asignacion)">
+                                            <IconArrowBack size="24" stroke-width="1.5" />
+                                            </a>
                                         </td>
                                     </tr>
                                     <tr v-if="!store.loading && store.asignaciones.length === 0">
@@ -83,7 +89,7 @@ import HeaderPage from '@/components/page/header/Component.vue';
 import AsignacionForm from '@/components/forms/AsignacionForm.vue';
 import UpdateAsignacionForm from '@/components/forms/UpdateAsignacionForm.vue';
 import DevolucionAsignacionModal from '@/components/modals/DevolucionAsignacionModal.vue';
-
+import { IconEdit, IconArrowBack } from '@tabler/icons-vue';
 const store = useAsignacionStore();
 const selectedAsignacion = ref(null);
 const showAsignacionModal = ref(false);
