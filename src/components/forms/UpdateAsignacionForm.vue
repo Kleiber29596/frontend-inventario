@@ -5,7 +5,7 @@
             <!-- Contenido del modal -->
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="asignacionModalLabel">Nueva Asignación</h5>
+                    <h5 class="modal-title" id="asignacionModalLabel">Editar Asignación</h5>
                     <button type="button" class="btn-close" @click="close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -110,7 +110,7 @@ const resetForm = () => {
         fecha_fin: null,
         estatus_id: '',
         motivo: null,
-        bienes_id: [],
+        bienes: [],
     };
     store.catalogs.personas = [];
 };
@@ -122,7 +122,38 @@ watch(() => form.value.departamento_id, (newVal) => {
     }
 });
 
+watch(() => props.asignacion, async (newVal) => {
+    if (newVal && newVal.id) {
+        // Fetch personas for the department first, then populate the form
+        if (newVal.departamento && newVal.departamento.id) {
+            await store.fetchPersonasPorDepartamento(newVal.departamento.id);
+        }
+        populateForm(newVal);
+    } else {
+        resetForm();
+    }
+}, { deep: true, immediate: true });
 
+const populateForm = (newVal) => {
+    form.value.id = newVal.id;
+    form.value.fecha_inicio = newVal.fecha_inicio;
+
+    // Find and assign the full objects from catalogs
+    form.value.departamento_id = store.catalogs.departamentos.find(d => d.id === newVal.departamento.id) || null;
+    form.value.persona_id = store.catalogs.personas.find(p => p.id === newVal.persona.id) || null;
+    form.value.estatus_id = store.catalogs.estatus.find(e => e.id === newVal.estatus.id) || null;
+    form.value.motivo = store.catalogs.motivos.find(m => m.id === newVal.motivo.id) || null;
+
+    // Ensure bienes are correctly mapped for the select component
+    if (newVal.bienes && Array.isArray(newVal.bienes)) {
+        form.value.bienes_id = newVal.bienes.map(b => {
+            const bienData = store.bienes.find(bien => bien.id === b.bien_id);
+            return bienData ? { id: bienData.id, label: bienData.label } : null;
+        }).filter(b => b !== null);
+    } else {
+        form.value.bienes_id = [];
+    }
+};
 
 
 
@@ -154,9 +185,9 @@ const handleSubmit = async () => {
     };
 
     try {
-        await store.createAsignacion(payload);
+        // Only update existing assignment
+        await store.updateAsignacion(formValue.id, payload);
         close();
-        resetForm(); // Reset form after successful creation
     } catch (error) {
         // Replace with a more robust notification system if available
         alert('Ocurrió un error al guardar la asignación.');

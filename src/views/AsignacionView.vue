@@ -41,6 +41,7 @@
                                         <td><span class="badge bg-success">{{ asignacion.estatus.descripcion }}</span></td>
                                         <td>
                                             <button class="btn btn-sm btn-warning" @click="openModal(asignacion)">Editar</button>
+                                            <button class="btn btn-sm btn-info ms-2" @click="openDevolucionModal(asignacion)">Devolución</button>
                                         </td>
                                     </tr>
                                     <tr v-if="!store.loading && store.asignaciones.length === 0">
@@ -68,7 +69,9 @@
             </div>
         </div>
 
-        <AsignacionForm :asignacion="selectedAsignacion" :showModal="showAsignacionModal" @close="closeModal" />
+        <AsignacionForm :asignacion="selectedAsignacion" :showModal="showAsignacionModal" @close="closeCreateModal" />
+        <UpdateAsignacionForm :asignacion="selectedAsignacion" :showModal="showUpdateAsignacionModal" @close="closeUpdateModal" />
+        <DevolucionAsignacionModal :asignacion="selectedAsignacionForDevolucion" :showModal="showDevolucionModal" @close="closeDevolucionModal" />
 
     </main>
 </template>
@@ -78,10 +81,15 @@ import { ref, onMounted } from 'vue';
 import { useAsignacionStore } from '@/stores/asignacionStore';
 import HeaderPage from '@/components/page/header/Component.vue';
 import AsignacionForm from '@/components/forms/AsignacionForm.vue';
+import UpdateAsignacionForm from '@/components/forms/UpdateAsignacionForm.vue';
+import DevolucionAsignacionModal from '@/components/modals/DevolucionAsignacionModal.vue';
 
 const store = useAsignacionStore();
 const selectedAsignacion = ref(null);
 const showAsignacionModal = ref(false);
+const showUpdateAsignacionModal = ref(false);
+const showDevolucionModal = ref(false);
+const selectedAsignacionForDevolucion = ref(null);
 
 onMounted(() => {
     store.fetchAsignaciones();
@@ -90,12 +98,33 @@ onMounted(() => {
 
 const openModal = (asignacion = null) => {
     selectedAsignacion.value = asignacion;
-    showAsignacionModal.value = true;
+    if (asignacion) {
+        showUpdateAsignacionModal.value = true;
+    } else {
+        showAsignacionModal.value = true;
+    }
 };
 
-const closeModal = () => {
+const closeCreateModal = () => {
     showAsignacionModal.value = false;
     selectedAsignacion.value = null;
+    store.fetchAsignaciones(); // Recargar lista al cerrar
+};
+
+const closeUpdateModal = () => {
+    showUpdateAsignacionModal.value = false;
+    selectedAsignacion.value = null;
+    store.fetchAsignaciones(); // Recargar lista al cerrar
+};
+
+const openDevolucionModal = (asignacion) => {
+    selectedAsignacionForDevolucion.value = asignacion;
+    showDevolucionModal.value = true;
+};
+
+const closeDevolucionModal = () => {
+    showDevolucionModal.value = false;
+    selectedAsignacionForDevolucion.value = null;
     store.fetchAsignaciones(); // Recargar lista al cerrar
 };
 
