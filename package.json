@@ -30,16 +30,14 @@
     "jwt-decode": "^3.1.2",
     "mitt": "^3.0.1",
     "pinia": "^2.1.7",
-    "select2": "^4.1.0-rc.0",
     "sweetalert2": "^11.6.13",
     "vee-validate": "^4.13.1",
     "vue": "^3.4.21",
     "vue-loading-overlay": "^6.0.6",
-    "vue-multiselect": "^3.3.1",
     "vue-router": "^4.3.0",
+    "vue-select": "^4.0.0-beta.6",
     "vue-step-progress": "^1.0.2",
     "vue-sweetalert2": "^5.0.11",
-    "vue3-select2-component": "^0.1.7",
     "yup": "^1.4.0"
   },
   "devDependencies": {

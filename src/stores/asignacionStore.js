@@ -6,6 +6,7 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 export const useAsignacionStore = defineStore('asignacion', {
   state: () => ({
     asignaciones: [],
+    bienes: [],
     paginacion: {
       total: 0,
       paginas: 0,
@@ -20,7 +21,7 @@ export const useAsignacionStore = defineStore('asignacion', {
       departamentos: [],
       estatus: [], // For assignments
       estatusBienes: [], // For assets
-      bienes: [],
+      motivos: [],
     },
   }),
   actions: {
@@ -32,8 +33,9 @@ export const useAsignacionStore = defineStore('asignacion', {
             page,
             q: search,
           },
+
         });
-        this.asignaciones = response.data.items || [];
+        this.asignaciones = response.data.results || [];
         this.paginacion = {
           total: response.data.total,
           paginas: response.data.paginas,
@@ -48,6 +50,22 @@ export const useAsignacionStore = defineStore('asignacion', {
         this.loading = false;
       }
     },
+
+    async fetchBienes() {
+      this.loading = true;
+      try {
+      const response = await axios.get(`${BASE_URL}bienes/para-select`);
+      this.bienes = response.data;
+      } catch (error) {
+      console.error("Error al obtener bienes:", error);
+      this.bienes = [];
+      } finally {
+      this.loading = false;
+      }
+    },
+
+     
+
     async createAsignacion(asignacion) {
       this.loading = true;
       try {
@@ -75,20 +93,23 @@ export const useAsignacionStore = defineStore('asignacion', {
     async fetchCatalogos() {
       this.loading = true;
       try {
-        const [departamentosRes, estatusAsignacionRes, estatusBienesRes] = await Promise.all([
+        const [departamentosRes, estatusAsignacionRes, estatusBienesRes, motivosRes] = await Promise.all([
           axios.get(`${BASE_URL}auxiliares/listar_dependencias`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipo?tipo=asignacion`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipo?tipo=bienes`),
+          axios.get(`${BASE_URL}auxiliares/motivos?tipo=Asignacion`)
         ]);
-        this.catalogs.departamentos = departamentosRes.data;
-        this.catalogs.estatus = estatusAsignacionRes.data;
-        this.catalogs.estatusBienes = estatusBienesRes.data;
+        this.catalogs.departamentos = Array.isArray(departamentosRes.data) ? departamentosRes.data : [];
+        this.catalogs.estatus       = Array.isArray(estatusAsignacionRes.data) ? estatusAsignacionRes.data : [];
+        this.catalogs.estatusBienes = Array.isArray(estatusBienesRes.data) ? estatusBienesRes.data : [];
+        this.catalogs.motivos = Array.isArray(motivosRes.data) ? motivosRes.data : [];
         this.catalogs.personas = []; // Personas se cargarán dinámicamente
       } catch (error) {
         console.error("Error al obtener catálogos:", error);
         this.catalogs.departamentos = [];
         this.catalogs.estatus = [];
         this.catalogs.estatusBienes = [];
+        this.catalogs.motivos = [];
       } finally {
         this.loading = false;
       }
@@ -103,45 +124,12 @@ export const useAsignacionStore = defineStore('asignacion', {
         const response = await axios.get(`${BASE_URL}personas/listar`, {
           params: { departamento_id: departamentoId },
         });
-        this.catalogs.personas = response.data;
+        this.catalogs.personas = Array.isArray(response.data) ? response.data : response.data.items || [];
       } catch (error) {
         console.error("Error al obtener personas por departamento:", error);
         this.catalogs.personas = [];
       }
     },
-    async searchBienes(query) {
-        if (this.catalogs.estatusBienes.length === 0) {
-            await this.fetchCatalogos();
-        }
-
-        if (query.length < 2) {
-            this.catalogs.bienes = [];
-            return;
-        }
-
-        try {
-            const estatusDisponible = this.catalogs.estatusBienes.find(e => e.descripcion && e.descripcion.toLowerCase() === 'disponible');
-            const estatusId = estatusDisponible ? estatusDisponible.id : null;
-
-            if (!estatusId) {
-                console.error("ID for asset status 'Disponible' not found.");
-                this.catalogs.bienes = [];
-                return;
-            }
-
-            const response = await axios.get(`${BASE_URL}bienes/listar`, {
-                params: { 
-                    q: query, 
-                    estatus_id: estatusId,
-                    page: 1,
-                    page_size: 10
-                }
-            });
-            this.catalogs.bienes = response.data.items;
-        } catch (error) {
-            console.error("Error al buscar bienes:", error);
-            this.catalogs.bienes = [];
-        }
-    }
+    
   },
 });

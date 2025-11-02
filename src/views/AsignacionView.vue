@@ -35,10 +35,10 @@
                                     </tr>
                                     <tr v-for="asignacion in store.asignaciones" :key="asignacion.id">
                                         <td>{{ asignacion.id }}</td>
-                                        <td>{{ asignacion.persona.nombre_completo }}</td>
+                                        <td>{{ asignacion.persona.primer_nombre }}</td>
                                         <td>{{ asignacion.departamento.nombre }}</td>
                                         <td>{{ asignacion.fecha_inicio }}</td>
-                                        <td><span class="badge">{{ asignacion.estatus.nombre }}</span></td>
+                                        <td><span class="badge bg-success">{{ asignacion.estatus.descripcion }}</span></td>
                                         <td>
                                             <button class="btn btn-sm btn-warning" @click="openModal(asignacion)">Editar</button>
                                         </td>
@@ -68,7 +68,7 @@
             </div>
         </div>
 
-        <AsignacionForm :asignacion="selectedAsignacion" @close="closeModal" />
+        <AsignacionForm :asignacion="selectedAsignacion" :showModal="showAsignacionModal" @close="closeModal" />
 
     </main>
 </template>
@@ -78,25 +78,23 @@ import { ref, onMounted } from 'vue';
 import { useAsignacionStore } from '@/stores/asignacionStore';
 import HeaderPage from '@/components/page/header/Component.vue';
 import AsignacionForm from '@/components/forms/AsignacionForm.vue';
-import { Modal } from 'bootstrap';
 
 const store = useAsignacionStore();
 const selectedAsignacion = ref(null);
-let modalInstance = null;
+const showAsignacionModal = ref(false);
 
 onMounted(() => {
     store.fetchAsignaciones();
     store.fetchCatalogos();
-    modalInstance = new Modal(document.getElementById('asignacionModal'));
 });
 
 const openModal = (asignacion = null) => {
     selectedAsignacion.value = asignacion;
-    modalInstance.show();
+    showAsignacionModal.value = true;
 };
 
 const closeModal = () => {
-    modalInstance.hide();
+    showAsignacionModal.value = false;
     selectedAsignacion.value = null;
     store.fetchAsignaciones(); // Recargar lista al cerrar
 };

@@ -7,9 +7,8 @@ import Pagination from '@/components/paginacion/paginacion.vue'
 import SearchInput from '@/components/paginacion/searchInput.vue'
 import { Toast } from 'bootstrap'
 import { IconEdit } from '@tabler/icons-vue'
+
 const BASE_URL = import.meta.env.VITE_BASE_URL
-import Multiselect from 'vue-multiselect'
-import 'vue-multiselect/dist/vue-multiselect.css'
 import { IconArrowBack, IconArrowBackUp, IconPrinter, IconRotate, IconRefresh } from '@tabler/icons-vue'
 
 // Datos simulados (pueden venir de tu API Django)
@@ -450,18 +449,7 @@ watch(search, () => {
               </div>
               <div class="col-12">
                 <label class="form-label">Bienes *</label>
-                <Multiselect v-model="bienesSeleccionados" :options="bienes" :multiple="true" :close-on-select="false"
-                  track-by="id" placeholder="Seleccione los bienes">
-                  <template #option="{ option }">
-                    {{ option.cod_bien }} - {{ option.subcategoria }}
-                  </template>
-                  <template #tag="{ option, remove }">
-                    <span class="multiselect__tag">
-                      <span>{{ option.cod_bien }} - {{ option.subcategoria.descripcion }}</span>
-                      <i class="multiselect__tag-icon" @click="remove(option)"></i>
-                    </span>
-                  </template>
-                </Multiselect>
+                <!-- Aquí iría el nuevo componente Select2 si se usara en esta vista -->
               </div>
             </div>
           </div>
