@@ -23,6 +23,7 @@ export const useBienesStore = defineStore('bienes', {
       estadosFisicos: [],
       modelos: [],
       colores: [],
+      estatus: [],
     },
   }),
   actions: {
@@ -88,6 +89,7 @@ export const useBienesStore = defineStore('bienes', {
           modelosResponse,
           estadosFisicosResponse,
           coloresResponse,
+          estatusResponse,
         ] = await Promise.all([
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/categorias`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipos_bien`),
@@ -95,6 +97,7 @@ export const useBienesStore = defineStore('bienes', {
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/modelos`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estados_fisicos`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/colores`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipo?tipo=bienes`),
 
         ]);
 
@@ -104,6 +107,7 @@ export const useBienesStore = defineStore('bienes', {
         this.catalogs.modelos = modelosResponse.data;
         this.catalogs.estadosFisicos = estadosFisicosResponse.data;
         this.catalogs.colores = coloresResponse.data;
+        this.catalogs.estatus = estatusResponse.data;
       } catch (error) {
         console.error("Error al obtener catálogos de bienes:", error);
       } finally {

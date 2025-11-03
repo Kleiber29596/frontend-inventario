@@ -64,6 +64,7 @@
               </tbody>
             </table>
             <Pagination v-model:page="page" :pageSize="paginacion.paginas" :total="paginacion.total" />
+
           </div>
         </div>
 

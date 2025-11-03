@@ -117,7 +117,7 @@ const store = useDesincorporacionStore();
 
 const form = ref({
     id: null,
-    motivo: '',
+    motivo: null,
     fecha_inicio: '',
     persona_responsable_id: null,
     departamento_id: null,
@@ -174,7 +174,7 @@ const handleSubmit = async () => {
         persona_responsable_id: form.value.persona_responsable_id?.id,
         departamento_id: form.value.departamento_id?.id,
         estatus_id: form.value.estatus_id?.id,
-        motivo: form.value.motivo?.id,
+        motivo_id: form.value.motivo?.id,
         fecha_inicio: form.value.fecha_inicio,
         bienes: form.value.bienes.map(bien => ({ bien_id: bien.id }))
 
@@ -196,7 +196,7 @@ const handleSubmit = async () => {
 const resetForm = () => {
     form.value = {
         id: null,
-        motivo: '',
+        motivo: null,
         fecha_inicio: '',
         persona_responsable_id: null,
         departamento_id: null,

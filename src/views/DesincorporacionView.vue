@@ -35,13 +35,23 @@
                                     </tr>
                                     <tr v-for="desincorporacion in store.desincorporaciones" :key="desincorporacion.id">
                                         <td>{{ desincorporacion.id }}</td>
-                                        <td>{{ desincorporacion.motivo }}</td>
+                                        <td>{{ desincorporacion.motivo.descripcion}}</td>
                                         <td>{{ desincorporacion.fecha_inicio }}</td>
-                                        <td>{{ desincorporacion.persona_responsable.nombre_completo }}</td>
-                                        <td><span class="badge">{{ desincorporacion.estatus.nombre }}</span></td>
+                                        <td>{{ desincorporacion.persona_responsable.primer_nombre + ' ' + desincorporacion.persona_responsable.primer_apellido}}</td>
+                                        <td><span class="badge bg-danger">{{ desincorporacion.estatus.descripcion}}</span></td>
+                                        
+                                            <!-- <button class="btn btn-sm btn-warning" @click="openModal(desincorporacion)">Editar</button> -->
                                         <td>
-                                            <button class="btn btn-sm btn-warning" @click="openModal(desincorporacion)">Editar</button>
+                                            <a class="btn btn-action" @click="openModal(desincorporacion)">
+                                            <IconEdit size="24" stroke-width="1.5" />
+                                            </a>
                                         </td>
+                                        <td>
+                                            <a class="btn btn-action" @click="openDevolucionModal(asignacion)">
+                                            <IconArrowBack size="24" stroke-width="1.5" />
+                                            </a>
+                                        </td>
+                                      
                                     </tr>
                                     <tr v-if="!store.loading && store.desincorporaciones.length === 0">
                                         <td colspan="6" class="text-center">No se encontraron desincorporaciones.</td>
@@ -79,7 +89,7 @@ import { useDesincorporacionStore } from '@/stores/desincorporacionStore';
 import HeaderPage from '@/components/page/header/Component.vue';
 import DesincorporacionForm from '@/components/forms/DesincorporacionForm.vue';
 import { Modal } from 'bootstrap';
-
+import { IconEdit, IconArrowBack } from '@tabler/icons-vue';
 const store = useDesincorporacionStore();
 const selectedDesincorporacion = ref(null);
 let modalInstance = null;

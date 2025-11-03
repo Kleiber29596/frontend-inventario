@@ -87,6 +87,17 @@
               </div>
 
               <div class="col-md-4">
+                <label class="form-label">Estatus*</label>
+                <SelectVue
+                  v-model="form.estatus_id"
+                  :options="bienesStore.catalogs.estatus"
+                  placeholder="Selecciona un Estatus"
+                  label="descripcion"
+                  track-by="id"
+                />
+              </div>
+
+              <div class="col-md-4">
                 <label class="form-label">Medida</label>
                 <input v-model="form.medida" type="number" class="form-control" />
               </div>
@@ -95,6 +106,9 @@
                 <label class="form-label">Valor Monetario *</label>
                 <input v-model="form.valor_monetario" type="number" step="0.01" class="form-control" />
               </div>
+
+             
+                  
 
               <div class="col-md-4">
                 <label class="form-label">Fecha de adquisición *</label>
@@ -142,6 +156,7 @@ const form = reactive({
   medida: '',
   valor_monetario: '',
   fecha_adquisicion: '',
+  estatus_id: null,
 });
 
 const loading = ref(false);
@@ -163,6 +178,7 @@ watch(() => props.bienData, async (newVal) => {
     form.marca_id = catalogs.marcas.find(m => m.descripcion === newVal.marca) || null;
     form.modelo_id = catalogs.modelos.find(m => m.descripcion === newVal.modelo) || null;
     form.estado_fisico_id = catalogs.estadosFisicos.find(e => e.nombre === newVal.estado_fisico) || null;
+    form.estatus_id = catalogs.estatus.find(e => e.descripcion === newVal.estatus) || null;
     form.medida = newVal.medida || '';
     form.valor_monetario = newVal.valor_monetario || '';
     form.fecha_adquisicion = (newVal.fecha_adquisicion || '').slice(0, 10);
@@ -184,6 +200,7 @@ const resetForm = () => {
     medida: '',
     valor_monetario: '',
     fecha_adquisicion: '',
+    estatus_id: null,
   });
 };
 
@@ -205,6 +222,7 @@ const submitForm = async () => {
     marca_id: form.marca_id?.id,
     modelo_id: form.modelo_id?.id,
     estado_fisico_id: form.estado_fisico_id?.id,
+    estatus_id: form.estatus_id?.id,
   };
 
   try {
