@@ -11,17 +11,25 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="persona_responsable" class="form-label">Persona Responsable</label>
-                                <select id="persona_responsable" v-model="form.persona_responsable_id" class="form-select">
-                                    <option :value="null">Seleccione una persona</option>
-                                    <option v-for="persona in store.catalogs.personas" :key="persona.id" :value="persona.id">{{ persona.primer_nombre + ' ' + persona.primer_apellido}}</option>
-                                </select>
+                                <SelectVue
+                                    id="persona_responsable"
+                                    v-model="form.persona_responsable_id"
+                                    :options="store.catalogs.personas"
+                                    placeholder="Seleccione una persona"
+                                    label="primer_nombre"
+                                    track-by="id"
+                                />
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="departamento" class="form-label">Departamento</label>
-                                <select id="departamento" v-model="form.departamento_id" class="form-select">
-                                    <option :value="null">Seleccione un departamento</option>
-                                    <option v-for="depto in store.catalogs.departamentos" :key="depto.id" :value="depto.id">{{ depto.nombre }}</option>
-                                </select>
+                                <SelectVue
+                                    id="departamento"
+                                    v-model="form.departamento_id"
+                                    :options="store.catalogs.departamentos"
+                                    placeholder="Seleccione un departamento"
+                                    label="nombre"
+                                    track-by="id"
+                                />
                             </div>
                         </div>
                         <div class="row">
@@ -31,52 +39,57 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="estatus" class="form-label">Estatus</label>
-                                <select id="estatus" v-model="form.estatus_id" class="form-select">
-                                    <option :value="null">Seleccione un estatus</option>
-                                    <option v-for="estatus in store.catalogs.estatus" :key="estatus.id" :value="estatus.id">{{ estatus.nombre }}</option>
-                                </select>
+                                <SelectVue
+                                    id="estatus"
+                                    v-model="form.estatus_id"
+                                    :options="store.catalogs.estatus"
+                                    placeholder="Seleccione un estatus"
+                                    label="descripcion"
+                                    track-by="id"
+                                />
                             </div>
                         </div>
                         <div class="mb-3">
                             <label for="motivo" class="form-label">Motivo</label>
-                            <textarea class="form-control" id="motivo" rows="3" v-model="form.motivo"></textarea>
+                            <SelectVue
+                                id="motivo"
+                                v-model="form.motivo"
+                                :options="store.catalogs.motivos"
+                                placeholder="Seleccione un motivo"
+                                label="descripcion"
+                                track-by="id"
+                            />
+                        </div>
+
+                        <div class="mb-3" v-if="form.id && form.estatus_id !== 3">
+                            <label for="acta_firmada" class="form-label">Adjuntar Acta Firmada</label>
+                            <input type="file" class="form-control" id="acta_firmada" @change="handleFileUpload">
                         </div>
 
                         <hr>
 
-                        <h5>Bienes a Desincorporar</h5>
                         <div class="mb-3">
-                            <label for="bien-search" class="form-label">Buscar Bien</label>
-                             <input type="text" class="form-control" @input="onBienSearch($event.target.value)" placeholder="Escribe para buscar serial...">
-                            <select class="form-select mt-2" @change="addBienById($event.target.value)">
-                                <option :value="null">Resultados de la búsqueda</option>
-                                <option v-for="bien in store.catalogs.bienes" :key="bien.id" :value="bien.id">{{ bien.serial }}</option>
-                            </select>
-                            <small class="form-text text-muted">Busca por serial del bien.</small>
+                            <label for="bienes" class="form-label">Bienes a Desincorporar</label>
+                            <SelectVue
+                                id="bienes"
+                                v-model="form.bienes"
+                                :options="store.catalogs.bienes"
+                                placeholder="Seleccione los bienes a desincorporar"
+                                label="label"
+                                track-by="id"
+                                :multiple="true"
+                            />
                         </div>
 
-                        <table class="table table-sm table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Serial</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(bien, index) in form.bienes" :key="bien.bien_id">
-                                    <td>{{ bien.serial }}</td>
-                                    <td>
-                                        <button type="button" class="btn btn-danger btn-sm" @click="removeBien(index)">Quitar</button>
-                                    </td>
-                                </tr>
-                                <tr v-if="form.bienes.length === 0">
-                                    <td colspan="2" class="text-center">No hay bienes agregados.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+
 
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-success" v-if="form.id && form.estatus_id !== 3" @click="uploadActaAndApprove" :disabled="!fileActa || store.loading">
+                                <span v-if="store.loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Adjuntar Acta y Aprobar
+                            </button>
                             <button type="submit" class="btn btn-primary" :disabled="store.loading">
                                 <span v-if="store.loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                 Guardar
@@ -92,6 +105,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useDesincorporacionStore } from '@/stores/desincorporacionStore';
+import SelectVue from '@/components/select/select-vue.vue';
 
 const props = defineProps({
     desincorporacion: Object
@@ -111,34 +125,43 @@ const form = ref({
     bienes: []
 });
 
-watch(() => props.desincorporacion, (newVal) => {
+watch(() => props.desincorporacion, async (newVal) => {
     if (newVal) {
-        form.value = { ...newVal, bienes: newVal.bienes || [] };
+        if (store.catalogs.bienes.length === 0) {
+            await store.fetchCatalogos();
+        }
+        form.value = {
+            ...newVal,
+            bienes: newVal.bienes ? newVal.bienes.map(b => store.catalogs.bienes.find(cb => cb.id === b.bien_id)) : []
+        };
     } else {
         resetForm();
     }
 });
 
-let searchTimeout;
-const onBienSearch = (query) => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        store.searchBienes(query);
-    }, 300); // Debounce
+
+
+const fileActa = ref(null);
+
+const handleFileUpload = (event) => {
+    fileActa.value = event.target.files[0];
 };
 
-const addBienById = (bienId) => {
-    const bien = store.catalogs.bienes.find(b => b.id === parseInt(bienId));
-    if (bien && !form.value.bienes.some(b => b.bien_id === bien.id)) {
-        form.value.bienes.push({
-            bien_id: bien.id,
-            serial: bien.serial
-        });
+const uploadActaAndApprove = async () => {
+    if (!fileActa.value) {
+        alert('Por favor, selecciona un archivo para el acta.');
+        return;
     }
-};
-
-const removeBien = (index) => {
-    form.value.bienes.splice(index, 1);
+    try {
+        store.loading = true;
+        await store.uploadActaAndApprove(form.value.id, fileActa.value);
+        emit('close');
+        resetForm();
+    } catch (error) {
+        alert('Ocurrió un error al adjuntar el acta y aprobar la desincorporación.');
+    } finally {
+        store.loading = false;
+    }
 };
 
 const handleSubmit = async () => {
@@ -147,11 +170,19 @@ const handleSubmit = async () => {
         return;
     }
 
-    const payload = { ...form.value };
+    const payload = {
+        persona_responsable_id: form.value.persona_responsable_id?.id,
+        departamento_id: form.value.departamento_id?.id,
+        estatus_id: form.value.estatus_id?.id,
+        motivo: form.value.motivo?.id,
+        fecha_inicio: form.value.fecha_inicio,
+        bienes: form.value.bienes.map(bien => ({ bien_id: bien.id }))
+
+    };
 
     try {
         if (payload.id) {
-            await store.updateDesincorporacion(payload.id, payload);
+            await store.updateDesincorporacion(form.id, payload);
         } else {
             await store.createDesincorporacion(payload);
         }

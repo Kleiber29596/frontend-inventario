@@ -20,19 +20,20 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
       departamentos: [],
       estatus: [],
       bienes: [],
+      motivos : [],
     },
   }),
   actions: {
     async fetchDesincorporaciones(page = 1, search = '') {
       this.loading = true;
       try {
-        const response = await axios.get(`${BASE_URL}gestion/desincorporaciones/listar`, {
+        const response = await axios.get(`${BASE_URL}desincorporaciones/listar`, {
           params: {
             page,
             q: search,
           },
         });
-        this.desincorporaciones = response.data.items;
+        this.desincorporaciones = response.data.results || [];
         this.paginacion = {
           total: response.data.total,
           paginas: response.data.paginas,
@@ -49,7 +50,7 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
     async createDesincorporacion(desincorporacion) {
       this.loading = true;
       try {
-        await axios.post(`${BASE_URL}gestion/desincorporaciones/crear`, desincorporacion);
+        await axios.post(`${BASE_URL}desincorporaciones/crear`, desincorporacion);
         await this.fetchDesincorporaciones(); // Refresh list
       } catch (error) {
         console.error("Error al crear la desincorporación:", error);
@@ -61,7 +62,7 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
     async updateDesincorporacion(id, desincorporacion) {
       this.loading = true;
       try {
-        await axios.put(`${BASE_URL}gestion/desincorporaciones/actualizar/${id}`, desincorporacion);
+        await axios.put(`${BASE_URL}desincorporaciones/actualizar/${id}`, desincorporacion);
         await this.fetchDesincorporaciones(); // Refresh list
       } catch (error) {
         console.error("Error al actualizar la desincorporación:", error);
@@ -73,33 +74,45 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
     async fetchCatalogos() {
       this.loading = true;
       try {
-        const [personasRes, departamentosRes, estatusRes] = await Promise.all([
-          axios.get(`${BASE_URL}auxiliares/personas/listar`),
-          axios.get(`${BASE_URL}auxiliares/dependencias/listar`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus?tipo=desincorporacion`),
+        const [personasRes, departamentosRes, estatusRes, bienesRes, motivosRes] = await Promise.all([
+          axios.get(`${BASE_URL}personas/listar`),
+          axios.get(`${BASE_URL}auxiliares/listar_dependencias`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipo?tipo=desincorporacion`),
+          axios.get(`${BASE_URL}bienes/para-select`), // Fetch all bienes
+          axios.get(`${BASE_URL}auxiliares/motivos?tipo=Desincorporación`),
+          
         ]);
-        this.catalogs.personas = personasRes.data.items;
-        this.catalogs.departamentos = departamentosRes.data.items;
-        this.catalogs.estatus = estatusRes.data.items;
+        this.catalogs.personas      = personasRes.data;
+        this.catalogs.departamentos = departamentosRes.data;
+        this.catalogs.estatus       = estatusRes.data;
+        this.catalogs.bienes        = bienesRes.data;
+        this.catalogs.motivos       = motivosRes.data;
       } catch (error) {
         console.error("Error al obtener catálogos:", error);
       } finally {
         this.loading = false;
       }
     },
-    async searchBienes(query) {
-        if (query.length < 2) {
-            this.catalogs.bienes = [];
-            return;
-        }
-        try {
-            const response = await axios.get(`${BASE_URL}gestion/bienes/listar`, {
-                params: { q: query }
-            });
-            this.catalogs.bienes = response.data.items;
-        } catch (error) {
-            console.error("Error al buscar bienes:", error);
-        }
-    }
+    async uploadActaAndApprove(id, file) {
+      this.loading = true;
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        // Assuming estatus_id 3 is for 'Aprobada'
+        formData.append('estatus_id', 3);
+
+        await axios.post(`${BASE_URL}desincorporaciones/upload-acta/${id}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        await this.fetchDesincorporaciones(); // Refresh list
+      } catch (error) {
+        console.error("Error al adjuntar el acta y aprobar la desincorporación:", error);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
   },
 });
