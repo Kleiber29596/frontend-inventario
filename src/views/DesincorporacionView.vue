@@ -45,10 +45,8 @@
                                             <a class="btn btn-action" @click="openModal(desincorporacion)">
                                             <IconEdit size="24" stroke-width="1.5" />
                                             </a>
-                                        </td>
-                                        <td>
-                                            <a class="btn btn-action" @click="openDevolucionModal(asignacion)">
-                                            <IconArrowBack size="24" stroke-width="1.5" />
+                                            <a class="btn btn-action" @click="openAdjuntarActaModal(desincorporacion)">
+                                            <IconPaperclip size="24" stroke-width="1.5" />
                                             </a>
                                         </td>
                                       
@@ -79,6 +77,7 @@
         </div>
 
         <DesincorporacionForm :desincorporacion="selectedDesincorporacion" @close="closeModal" />
+        <AdjuntarActaModal :desincorporacion="selectedDesincorporacionForActa" @close="closeModal" />
 
     </main>
 </template>
@@ -88,21 +87,30 @@ import { ref, onMounted } from 'vue';
 import { useDesincorporacionStore } from '@/stores/desincorporacionStore';
 import HeaderPage from '@/components/page/header/Component.vue';
 import DesincorporacionForm from '@/components/forms/DesincorporacionForm.vue';
+import AdjuntarActaModal from '@/components/modals/AdjuntarActaModal.vue';
 import { Modal } from 'bootstrap';
-import { IconEdit, IconArrowBack } from '@tabler/icons-vue';
+import { IconEdit, IconArrowBack, IconPaperclip } from '@tabler/icons-vue';
 const store = useDesincorporacionStore();
 const selectedDesincorporacion = ref(null);
 let modalInstance = null;
+let adjuntarActaModalInstance = null;
+const selectedDesincorporacionForActa = ref(null);
 
 onMounted(() => {
     store.fetchDesincorporaciones();
     store.fetchCatalogos();
     modalInstance = new Modal(document.getElementById('desincorporacionModal'));
+    adjuntarActaModalInstance = new Modal(document.getElementById('adjuntarActaModal'));
 });
 
 const openModal = (desincorporacion = null) => {
     selectedDesincorporacion.value = desincorporacion;
     modalInstance.show();
+};
+
+const openAdjuntarActaModal = (desincorporacion) => {
+    selectedDesincorporacionForActa.value = desincorporacion;
+    adjuntarActaModalInstance.show();
 };
 
 const closeModal = () => {
