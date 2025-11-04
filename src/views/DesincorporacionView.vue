@@ -35,7 +35,7 @@
                                     </tr>
                                     <tr v-for="desincorporacion in store.desincorporaciones" :key="desincorporacion.id">
                                         <td>{{ desincorporacion.id }}</td>
-                                        <td>{{ desincorporacion.motivo.descripcion}}</td>
+                                        <td>{{ desincorporacion.motivo.descripcion}} </td>
                                         <td>{{ desincorporacion.fecha_inicio }}</td>
                                         <td>{{ desincorporacion.persona_responsable.primer_nombre + ' ' + desincorporacion.persona_responsable.primer_apellido}}</td>
                                         <td><span class="badge bg-danger">{{ desincorporacion.estatus.descripcion}}</span></td>
