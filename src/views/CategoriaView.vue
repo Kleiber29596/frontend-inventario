@@ -6,16 +6,13 @@
         <div class="page-body mt-3 mb-3">
             <div class="ps-3 pe-3">
                 <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Listado de Categorías</h3>
-                        <div class="ms-auto">
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Buscar..." v-model="store.searchTerm" @keyup.enter="search">
-                                <button class="btn btn-outline-secondary" type="button" @click="search">Buscar</button>
+                    <div class="card-header d-flex justify-content-between">
+                            <p class="text-secondary m-0">Listado de Préstamos</p>
+                            <div class="d-flex gap-2">
+                                <SearchInput v-model="searchTerm" />
                                 <button class="btn btn-primary ms-2" @click="openModal()">Nueva Categoría</button>
                             </div>
                         </div>
-                    </div>
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped">
@@ -49,19 +46,8 @@
                             </table>
                         </div>
                     </div>
-                    <div class="card-footer d-flex align-items-center">
-                        <p class="m-0 text-muted">Mostrando <span>{{ store.categorias.length }}</span> de <span>{{ store.paginacion.total }}</span> entradas</p>
-                        <ul class="pagination m-0 ms-auto">
-                            <li class="page-item" :class="{ disabled: !store.paginacion.anterior }">
-                                <a class="page-link" href="#" @click.prevent="changePage(store.paginacion.pagina_actual - 1)">anterior</a>
-                            </li>
-                            <li class="page-item" v-for="page in store.paginacion.paginas" :key="page" :class="{ active: page === store.paginacion.pagina_actual }">
-                                <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
-                            </li>
-                            <li class="page-item" :class="{ disabled: !store.paginacion.siguiente }">
-                                <a class="page-link" href="#" @click.prevent="changePage(store.paginacion.pagina_actual + 1)">siguiente</a>
-                            </li>
-                        </ul>
+                    <div class="card-footer">
+                        <Pagination v-model:page="currentPage" v-model:pageSize="pageSize" :total="store.totalItems" />
                     </div>
                 </div>
             </div>
@@ -73,19 +59,49 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useCategoriaStore } from '@/stores/categoriaStore';
 import HeaderPage from '@/components/page/header/Component.vue';
 import CategoriaForm from '@/components/forms/CategoriaForm.vue';
 import { IconEdit, IconTrash } from '@tabler/icons-vue';
+import Pagination from '@/components/paginacion/paginacion.vue'
+import SearchInput from '@/components/paginacion/searchInput.vue'
+
+
+
+
+
 
 const store = useCategoriaStore();
 const selectedCategoria = ref(null);
 const showCategoriaModal = ref(false);
 
+// --- Nuevo Estado Local para Paginación/Búsqueda ---
+const currentPage = ref(1);
+const pageSize = ref(10);
+const searchTerm = ref(''); // Usaremos esta en lugar de store.searchTerm
+
+
+
+// Función centralizada para cargar los datos
+const fetchData = () => {
+    store.fetchCategorias(currentPage.value, pageSize.value, searchTerm.value);
+
+
+};
+
+
 onMounted(() => {
-    store.fetchCategorias();
+    fetchData();
+
 });
+
+// --- Watchers para Paginación y Búsqueda ---
+// Cuando cualquiera de estos cambie, recargamos los datos.
+watch([currentPage, pageSize, searchTerm], () => {
+    fetchData();
+});
+
 
 const openModal = (categoria = null) => {
     selectedCategoria.value = categoria;
@@ -105,13 +121,5 @@ const deleteCategoria = async (id) => {
     }
 };
 
-const search = () => {
-    store.fetchCategorias(1, store.searchTerm);
-};
 
-const changePage = (page) => {
-    if (page > 0 && page <= store.paginacion.paginas) {
-        store.fetchCategorias(page, store.searchTerm);
-    }
-};
 </script>
