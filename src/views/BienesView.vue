@@ -1,4 +1,3 @@
-
 <template>
   <main class="page-wrapper">
     <HeaderPage :icon="['fas', 'box']" text="Bienes" />
@@ -13,17 +12,11 @@
             </div>
           </div>
 
-          <div class="card-header">
-            <div class="row w-full">
-              <div class="col">
-                <p class="text-secondary m-0">Listado de Bienes</p>
-              </div>
-              <div class="col-md-auto col-sm-12">
-                <div class="ms-auto d-flex flex-wrap btn-list">
-                  <SearchInput v-model="search" />
-                  <a href="#" class="btn btn-0" title="Agregar bien" @click.prevent="openForm(false)">Agregar</a>
-                </div>
-              </div>
+          <div class="card-header d-flex justify-content-between">
+            <p class="text-secondary m-0">Listado de Bienes</p>
+            <div class="d-flex gap-2">
+              <SearchInput v-model="searchTerm" />
+              <a href="#" class="btn btn-primary ms-2" title="Agregar bien" @click.prevent="openForm(false)">Agregar</a>
             </div>
           </div>
 
@@ -43,10 +36,10 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-if="loading">
-                  <td colspan="8" class="text-center">Cargando...</td>
+                <tr v-if="store.loading">
+                  <td colspan="9" class="text-center">Cargando...</td>
                 </tr>
-                <tr v-for="bien in bienes" :key="bien.id">
+                <tr v-for="bien in store.bienes" :key="bien.id">
                   <td>{{ bien.serial_bien }}</td>
                   <td>{{ bien.tipo_bien }}</td>
                   <td>{{ bien.categoria }}</td>
@@ -61,11 +54,15 @@
                     </a>
                   </td>
                 </tr>
+                <tr v-if="!store.loading && store.bienes.length === 0">
+                    <td colspan="9" class="text-center">No se encontraron bienes.</td>
+                </tr>
               </tbody>
             </table>
-            <Pagination v-model:page="page" :pageSize="paginacion.paginas" :total="paginacion.total" />
-
           </div>
+            <div class="card-footer">
+                <Pagination v-model:page="currentPage" v-model:pageSize="pageSize" :total="store.totalItems" />
+            </div>
         </div>
 
         <BienesForm
@@ -82,10 +79,8 @@
   </main>
 </template>
 
-
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import { storeToRefs } from 'pinia';
 import { useBienesStore } from '@/stores/bienesStore';
 import FooterPage from '@/components/page/footer/Component.vue';
 import HeaderPage from '@/components/page/header/Component.vue';
@@ -94,9 +89,10 @@ import Pagination from '@/components/paginacion/paginacion.vue';
 import SearchInput from '@/components/paginacion/searchInput.vue';
 import BienesForm from '@/components/forms/BienesForm.vue';
 import { Toast } from 'bootstrap';
+import { storeToRefs } from 'pinia';
 
-const bienesStore = useBienesStore();
-const { bienes, paginacion, loading } = storeToRefs(bienesStore);
+
+const store = useBienesStore();
 
 const showForm = ref(false);
 const isEdit = ref(false);
@@ -104,19 +100,25 @@ const bienData = ref(null);
 const toastSuccess = ref(null);
 const toastMessage = ref('');
 
-const page = ref(1);
-const search = ref('');
+// --- New Local State for Pagination/Search ---
+const currentPage = ref(1);
+const pageSize = ref(10);
+const searchTerm = ref('');
 
-const fetchBienes = () => {
-  bienesStore.fetchBienes(page.value, search.value);
-
+// Centralized function to fetch data
+const fetchData = () => {
+  store.fetchBienes(currentPage.value, pageSize.value, searchTerm.value);
 };
 
 onMounted(() => {
-  fetchBienes();
+  fetchData();
+  store.catalogos_bienes()
 });
 
-watch([page, search], fetchBienes, { deep: true });
+// --- Watchers for Pagination and Search ---
+watch([currentPage, pageSize, searchTerm], () => {
+    fetchData();
+});
 
 const openForm = (edit = false, data = null) => {
   isEdit.value = edit;
@@ -128,12 +130,13 @@ const closeForm = () => {
   showForm.value = false;
   isEdit.value = false;
   bienData.value = null;
+  fetchData(); // Refetch data on close
 };
 
 const handleSubmit = () => {
   toastMessage.value = isEdit.value ? '✅ Bien actualizado correctamente' : '✅ Bien creado correctamente';
   const toast = new Toast(toastSuccess.value);
   toast.show();
-  fetchBienes();
+  fetchData(); // Refetch data on submit
 };
 </script>

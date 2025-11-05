@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia';
-import axios from '@/services/PostService';
+import axios from 'axios';
+
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export const usePersonaStore = defineStore('persona', {
     state: () => ({
@@ -8,21 +10,19 @@ export const usePersonaStore = defineStore('persona', {
         loading: false,
         error: null,
         searchTerm: '',
-        paginacion: {
-            total: 0,
-            paginas: 1,
-            pagina_actual: 1,
-            anterior: false,
-            siguiente: false,
-        },
+        totalItems: 0,
+        totalPages: 1,
+        currentPage: 1,
     }),
     actions: {
-        async fetchPersonas(page = 1, searchTerm = '') {
+        async fetchPersonas(page = 1, pageSize = 10, searchTerm = '') {
             this.loading = true;
             try {
-                const response = await axios.get(`/personas/listar?page=${page}&search=${searchTerm}`);
-                this.personas = response.data.data;
-                this.paginacion = response.data.paginacion;
+                const response = await axios.get(`${BASE_URL}personas/listar?page=${page}&page_size=${pageSize}&q=${searchTerm}`);
+                this.personas = response.data.results || [];
+                this.totalItems = response.data.total || 0;
+                this.totalPages = response.data.total_pages || 1;
+                this.currentPage = response.data.current_page || 1;
             } catch (error) {
                 this.error = error;
             } finally {
@@ -32,8 +32,8 @@ export const usePersonaStore = defineStore('persona', {
         async createPersona(persona) {
             this.loading = true;
             try {
-                const response = await axios.post('/personas/crear', persona);
-                this.fetchPersonas(this.paginacion.pagina_actual, this.searchTerm);
+                const response = await axios.post(`${BASE_URL}personas/crear`, persona);
+                this.fetchPersonas(1, 10, '');
                 return response.data;
             } catch (error) {
                 this.error = error;
@@ -45,8 +45,8 @@ export const usePersonaStore = defineStore('persona', {
         async updatePersona(id, persona) {
             this.loading = true;
             try {
-                const response = await axios.put(`/personas/actualizar/${id}`, persona);
-                this.fetchPersonas(this.paginacion.pagina_actual, this.searchTerm);
+                const response = await axios.put(`${BASE_URL}personas/actualizar/${id}`, persona);
+                this.fetchPersonas(1, 10, '');
                 return response.data;
             } catch (error) {
                 this.error = error;
@@ -58,8 +58,8 @@ export const usePersonaStore = defineStore('persona', {
         async deletePersona(id) {
             this.loading = true;
             try {
-                await axios.delete(`/personas/Eliminar/${id}`);
-                this.fetchPersonas(this.paginacion.pagina_actual, this.searchTerm);
+                await axios.delete(`${BASE_URL}personas/Eliminar/${id}`);
+                this.fetchPersonas(1, 10, '');
             } catch (error) {
                 this.error = error;
                 throw error;

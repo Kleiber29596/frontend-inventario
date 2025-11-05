@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia';
-import axios from '@/services/PostService';
+import axios from 'axios';
+
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export const useEstatusStore = defineStore('estatus', {
     state: () => ({
@@ -8,25 +10,23 @@ export const useEstatusStore = defineStore('estatus', {
         loading: false,
         error: null,
         searchTerm: '',
-        paginacion: {
-            total: 0,
-            paginas: 1,
-            pagina_actual: 1,
-            anterior: false,
-            siguiente: false,
-        },
+        totalItems: 0,
+        totalPages: 1,
+        currentPage: 1,
     }),
     actions: {
-        async fetchEstatus(page = 1, searchTerm = '', tipo = null) {
+        async fetchEstatus(page = 1, pageSize = 10, searchTerm = '', tipo = null) {
             this.loading = true;
             try {
-                let url = `/auxiliares/catalogo-bienes/estatus?page=${page}&search=${searchTerm}`;
+                let url = `${BASE_URL}auxiliares/catalogo-bienes/estatus?page=${page}&page_size=${pageSize}&q=${searchTerm}`;
                 if (tipo) {
                     url += `&tipo=${tipo}`;
                 }
                 const response = await axios.get(url);
-                this.estatusList = response.data.data;
-                this.paginacion = response.data.paginacion;
+                this.estatusList = response.data.results || [];
+                this.totalItems = response.data.total || 0;
+                this.totalPages = response.data.total_pages || 1;
+                this.currentPage = response.data.current_page || 1;
             } catch (error) {
                 this.error = error;
             } finally {
@@ -36,8 +36,8 @@ export const useEstatusStore = defineStore('estatus', {
         async createEstatus(estatus) {
             this.loading = true;
             try {
-                const response = await axios.post('/auxiliares/catalogo-bienes/estatus', estatus);
-                this.fetchEstatus(this.paginacion.pagina_actual, this.searchTerm);
+                const response = await axios.post(`${BASE_URL}auxiliares/catalogo-bienes/estatus`, estatus);
+                this.fetchEstatus(1, 10, '');
                 return response.data;
             } catch (error) {
                 this.error = error;
@@ -49,8 +49,8 @@ export const useEstatusStore = defineStore('estatus', {
         async updateEstatus(id, estatus) {
             this.loading = true;
             try {
-                const response = await axios.put(`/auxiliares/catalogo-bienes/estatus/${id}`, estatus);
-                this.fetchEstatus(this.paginacion.pagina_actual, this.searchTerm);
+                const response = await axios.put(`${BASE_URL}auxiliares/catalogo-bienes/estatus/${id}`, estatus);
+                this.fetchEstatus(1, 10, '');
                 return response.data;
             } catch (error) {
                 this.error = error;
@@ -62,8 +62,8 @@ export const useEstatusStore = defineStore('estatus', {
         async deleteEstatus(id) {
             this.loading = true;
             try {
-                await axios.delete(`/auxiliares/catalogo-bienes/estatus/${id}`);
-                this.fetchEstatus(this.paginacion.pagina_actual, this.searchTerm);
+                await axios.delete(`${BASE_URL}auxiliares/catalogo-bienes/estatus/${id}`);
+                this.fetchEstatus(1, 10, '');
             } catch (error) {
                 this.error = error;
                 throw error;

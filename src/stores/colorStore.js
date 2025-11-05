@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia';
-import axios from '@/services/PostService';
+import axios from 'axios';
+
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export const useColorStore = defineStore('color', {
     state: () => ({
@@ -8,44 +10,73 @@ export const useColorStore = defineStore('color', {
         loading: false,
         error: null,
         searchTerm: '',
-        paginacion: {
-            total: 0,
-            paginas: 1,
-            pagina_actual: 1,
-            anterior: false,
-            siguiente: false,
-        },
+       totalItems: 0,
+       totalPages: 1, 
+       currentPage: 1, // El valor que viene del backend
     }),
     actions: {
-        async fetchColores(page = 1, searchTerm = '') {
+        async fetchColores(page = 1, pageSize = 10, searchTerm = '') { // Acepta pageSize
             this.loading = true;
             try {
-                const response = await axios.get(`/auxiliares/catalogo-bienes/colores?page=${page}&search=${searchTerm}`);
-                this.colores = response.data.data;
-                this.paginacion = response.data.paginacion;
+                // Modificación crucial: usar page_size y q
+                const response = await axios.get(
+                    `${BASE_URL}auxiliares/catalogo-bienes/colores?page=${page}&page_size=${pageSize}&q=${searchTerm}`
+                );
+                console.log(response.data);
+
+                // Asumiendo que tu backend devuelve: { results: [...], total: 29 }
+                this.colores  = response.data.results || [];
+                this.totalItems  = response.data.results.total || 0;
+                this.totalItems  = response.data.total || 0;
+                this.totalPages  = response.data.total_pages || 1; 
+                this.currentPage = response.data.current_page || 1;
+                
             } catch (error) {
                 this.error = error;
             } finally {
                 this.loading = false;
             }
         },
-        // Placeholder for createColor, updateColor, deleteColor if they are added later
         async createColor(color) {
-            console.warn('createColor action not implemented for Color model.');
-            // Example: const response = await axios.post('/auxiliares/catalogo-bienes/colores', color);
-            // this.fetchColores(this.paginacion.pagina_actual, this.searchTerm);
-            // return response.data;
+            this.loading = true;
+            try {
+                const response = await axios.post(`${BASE_URL}auxiliares/catalogo-bienes/colores`, color);
+                // Optionally, add the new color to the list or refresh the list
+                this.fetchColores(1, 10, '');
+                return response.data;
+            } catch (error) {
+                this.error = error;
+                throw error;
+            } finally {
+                this.loading = false;
+            }
         },
         async updateColor(id, color) {
-            console.warn('updateColor action not implemented for Color model.');
-            // Example: const response = await axios.put(`/auxiliares/catalogo-bienes/colores/${id}`, color);
-            // this.fetchColores(this.paginacion.pagina_actual, this.searchTerm);
-            // return response.data;
+            this.loading = true;
+            try {
+                const response = await axios.put(`/auxiliares/catalogo-bienes/colores/${id}`, color);
+                // Optionally, update the color in the list or refresh the list
+                this.fetchColores(1, 10, '');
+                return response.data;
+            } catch (error) {
+                this.error = error;
+                throw error;
+            } finally {
+                this.loading = false;
+            }
         },
         async deleteColor(id) {
-            console.warn('deleteColor action not implemented for Color model.');
-            // Example: await axios.delete(`/auxiliares/catalogo-bienes/colores/${id}`);
-            // this.fetchColores(this.paginacion.pagina_actual, this.searchTerm);
+            this.loading = true;
+            try {
+                await axios.delete(`${BASE_URL}auxiliares/catalogo-bienes/colores/${id}`);
+                // Optionally, remove the color from the list or refresh the list
+                this.fetchColores(1, 10, '');
+            } catch (error) {
+                this.error = error;
+                throw error;
+            } finally {
+                this.loading = false;
+            }
         },
     },
 });

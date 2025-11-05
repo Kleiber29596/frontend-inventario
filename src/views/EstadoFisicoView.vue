@@ -6,14 +6,11 @@
         <div class="page-body mt-3 mb-3">
             <div class="ps-3 pe-3">
                 <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Listado de Estados Físicos</h3>
-                        <div class="ms-auto">
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Buscar..." v-model="store.searchTerm" @keyup.enter="search">
-                                <button class="btn btn-outline-secondary" type="button" @click="search">Buscar</button>
-                                <button class="btn btn-primary ms-2" @click="openModal()">Nuevo Estado Físico</button>
-                            </div>
+                    <div class="card-header d-flex justify-content-between">
+                        <p class="text-secondary m-0">Listado de Estados Físicos</p>
+                        <div class="d-flex gap-2">
+                            <SearchInput v-model="searchTerm" />
+                            <button class="btn btn-primary ms-2" @click="openModal()">Nuevo Estado Físico</button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -49,19 +46,8 @@
                             </table>
                         </div>
                     </div>
-                    <div class="card-footer d-flex align-items-center">
-                        <p class="m-0 text-muted">Mostrando <span>{{ store.estadosFisicos.length }}</span> de <span>{{ store.paginacion.total }}</span> entradas</p>
-                        <ul class="pagination m-0 ms-auto">
-                            <li class="page-item" :class="{ disabled: !store.paginacion.anterior }">
-                                <a class="page-link" href="#" @click.prevent="changePage(store.paginacion.pagina_actual - 1)">anterior</a>
-                            </li>
-                            <li class="page-item" v-for="page in store.paginacion.paginas" :key="page" :class="{ active: page === store.paginacion.pagina_actual }">
-                                <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
-                            </li>
-                            <li class="page-item" :class="{ disabled: !store.paginacion.siguiente }">
-                                <a class="page-link" href="#" @click.prevent="changePage(store.paginacion.pagina_actual + 1)">siguiente</a>
-                            </li>
-                        </ul>
+                    <div class="card-footer">
+                        <Pagination v-model:page="currentPage" v-model:pageSize="pageSize" :total="store.totalItems" />
                     </div>
                 </div>
             </div>
@@ -73,18 +59,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useEstadoFisicoStore } from '@/stores/estadoFisicoStore';
 import HeaderPage from '@/components/page/header/Component.vue';
 import EstadoFisicoForm from '@/components/forms/EstadoFisicoForm.vue';
 import { IconEdit, IconTrash } from '@tabler/icons-vue';
+import Pagination from '@/components/paginacion/paginacion.vue'
+import SearchInput from '@/components/paginacion/searchInput.vue'
 
 const store = useEstadoFisicoStore();
 const selectedEstadoFisico = ref(null);
 const showEstadoFisicoModal = ref(false);
 
+// --- Nuevo Estado Local para Paginación/Búsqueda ---
+const currentPage = ref(1);
+const pageSize = ref(10);
+const searchTerm = ref('');
+
+// Función centralizada para cargar los datos
+const fetchData = () => {
+    store.fetchEstadosFisicos(currentPage.value, pageSize.value, searchTerm.value);
+};
+
 onMounted(() => {
-    store.fetchEstadosFisicos();
+    fetchData();
+});
+
+// --- Watchers para Paginación y Búsqueda ---
+watch([currentPage, pageSize, searchTerm], () => {
+    fetchData();
 });
 
 const openModal = (estadoFisico = null) => {
@@ -95,23 +98,13 @@ const openModal = (estadoFisico = null) => {
 const closeModal = () => {
     showEstadoFisicoModal.value = false;
     selectedEstadoFisico.value = null;
-    store.fetchEstadosFisicos();
+    fetchData();
 };
 
 const deleteEstadoFisico = async (id) => {
     if (confirm('¿Está seguro de que desea eliminar este estado físico?')) {
         await store.deleteEstadoFisico(id);
-        store.fetchEstadosFisicos();
-    }
-};
-
-const search = () => {
-    store.fetchEstadosFisicos(1, store.searchTerm);
-};
-
-const changePage = (page) => {
-    if (page > 0 && page <= store.paginacion.paginas) {
-        store.fetchEstadosFisicos(page, store.searchTerm);
+        fetchData();
     }
 };
 </script>

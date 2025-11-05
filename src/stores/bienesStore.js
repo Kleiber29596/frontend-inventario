@@ -6,15 +6,11 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 export const useBienesStore = defineStore('bienes', {
   state: () => ({
     bienes: [],
-    paginacion: {
-      total: 0,
-      paginas: 0,
-      pagina_actual: 1,
-      siguiente: null,
-      anterior: null,
-    },
     loading: false,
     searchTerm: '',
+    totalItems: 0,
+    totalPages: 1,
+    currentPage: 1,
     catalogs: {
       categorias: [],
       subcategorias: [],
@@ -27,23 +23,20 @@ export const useBienesStore = defineStore('bienes', {
     },
   }),
   actions: {
-    async fetchBienes(page = 1, search = '') {
+    async fetchBienes(page = 1, pageSize = 10, searchTerm = '') {
       this.loading = true;
       try {
         const response = await axios.get(`${BASE_URL}bienes/listar`, {
           params: {
             page,
-            q: search,
+            page_size: pageSize,
+            q: searchTerm,
           },
         });
         this.bienes = response.data.results || [];
-        this.paginacion = {
-          total: response.data.total,
-          paginas: response.data.paginas,
-          pagina_actual: response.data.pagina_actual,
-          siguiente: response.data.siguiente,
-          anterior: response.data.anterior,
-        };
+        this.totalItems = response.data.total || 0;
+        this.totalPages = response.data.total_pages || 1;
+        this.currentPage = response.data.current_page || 1;
       } catch (error) {
         console.error("Error al obtener bienes:", error);
         this.bienes = [];
@@ -56,7 +49,7 @@ export const useBienesStore = defineStore('bienes', {
       this.loading = true;
       try {
         await axios.post(`${BASE_URL}bienes/crear`, bien);
-        await this.fetchBienes(); // Refresh list
+        await this.fetchBienes(1, 10, ''); // Refresh list
       } catch (error) {
         console.error("Error al crear el bien:", error);
         throw error;
@@ -69,7 +62,7 @@ export const useBienesStore = defineStore('bienes', {
       this.loading = true;
       try {
         await axios.put(`${BASE_URL}bienes/editar/${id}`, bien);
-        await this.fetchBienes(); // Refresh list
+        await this.fetchBienes(1, 10, ''); // Refresh list
       } catch (error) {
         console.error("Error al actualizar el bien:", error);
         throw error;
