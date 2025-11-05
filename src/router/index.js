@@ -145,6 +145,79 @@ const router = createRouter({
         requiredAuth: true
       }
     },
+    // Rutas de Configuración
+    {
+      path: '/configuracion/categorias',
+      name: 'configuracion-categorias',
+      component: () => import('@/views/CategoriaView.vue'),
+      meta: {
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/configuracion/modelos',
+      name: 'configuracion-modelos',
+      component: () => import('@/views/ModeloView.vue'),
+      meta: {
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/configuracion/motivos',
+      name: 'configuracion-motivos',
+      component: () => import('@/views/MotivoView.vue'),
+      meta: {
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/configuracion/dependencias',
+      name: 'configuracion-dependencias',
+      component: () => import('@/views/DependenciaView.vue'),
+      meta: {
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/configuracion/colores',
+      name: 'configuracion-colores',
+      component: () => import('@/views/ColorView.vue'),
+      meta: {
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/configuracion/tipos-bien',
+      name: 'configuracion-tipos-bien',
+      component: () => import('@/views/TipoBienView.vue'),
+      meta: {
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/configuracion/estados-fisicos',
+      name: 'configuracion-estados-fisicos',
+      component: () => import('@/views/EstadoFisicoView.vue'),
+      meta: {
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/configuracion/estatus',
+      name: 'configuracion-estatus',
+      component: () => import('@/views/EstatusView.vue'),
+      meta: {
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/configuracion/personas',
+      name: 'configuracion-personas',
+      component: () => import('@/views/PersonaView.vue'),
+      meta: {
+        requiredAuth: true
+      }
+    },
 
   ]
 })
