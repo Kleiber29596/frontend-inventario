@@ -14,12 +14,13 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Marca</label>
-                            <select class="form-select" v-model="form.marca_id" required>
-                                <option :value="null" disabled>Seleccione una marca</option>
-                                <option v-for="marca in marcaStore.marcas" :key="marca.id" :value="marca.id">
-                                    {{ marca.descripcion }}
-                                </option>
-                            </select>
+                            <SelectVue 
+                                v-model="form.marca"
+                                :options="marcaStore.marcas"
+                                placeholder="Seleccione una marca"
+                                label="descripcion"
+                                track-by="id"
+                            />
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -37,6 +38,7 @@ import { ref, watch, computed, onMounted } from 'vue';
 import { useModeloStore } from '@/stores/modeloStore';
 import { useMarcaStore } from '@/stores/marcaStore'; // Assuming a marcaStore exists
 import { Modal } from 'bootstrap';
+import SelectVue from '@/components/select/select-vue.vue';
 
 const props = defineProps({
     modelo: {
@@ -57,7 +59,7 @@ const marcaStore = useMarcaStore();
 const form = ref({
     id: null,
     descripcion: '',
-    marca_id: null,
+    marca: null,
 });
 
 const modeloModal = ref(null);
@@ -79,13 +81,13 @@ watch(() => props.showModal, (newVal) => {
             form.value = {
                 id: props.modelo.id,
                 descripcion: props.modelo.descripcion,
-                marca_id: props.modelo.marca ? props.modelo.marca.id : null,
+                marca: props.modelo.marca,
             };
         } else {
             form.value = {
                 id: null,
                 descripcion: '',
-                marca_id: null,
+                marca: null,
             };
         }
         modalInstance.show();
@@ -96,10 +98,16 @@ watch(() => props.showModal, (newVal) => {
 
 const submitForm = async () => {
     try {
+        const payload = {
+            ...form.value,
+            marca_id: form.value.marca ? form.value.marca.id : null,
+        };
+        delete payload.marca;
+
         if (isEditing.value) {
-            await modeloStore.updateModelo(form.value.id, form.value);
+            await modeloStore.updateModelo(payload.id, payload);
         } else {
-            await modeloStore.createModelo(form.value);
+            await modeloStore.createModelo(payload);
         }
         emit('close');
     } catch (error) {

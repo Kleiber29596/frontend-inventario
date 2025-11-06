@@ -10,7 +10,7 @@
                         <p class="text-secondary m-0">Listado de Motivos</p>
                         <div class="d-flex gap-2">
                             <SearchInput v-model="searchTerm" />
-                            <button class="btn btn-primary ms-2" @click="openModal()">Nuevo Motivo</button>
+                            <button class="btn btn-primary ms-2" @click="openModal(null, $event)">Nuevo Motivo</button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -39,7 +39,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <a class="btn btn-action" @click="openModal(motivo)">
+                                            <a class="btn btn-action" @click="openModal(motivo, $event)">
                                                 <IconEdit size="24" stroke-width="1.5" />
                                             </a>
                                             <a class="btn btn-action" @click="deleteMotivo(motivo.id)">
@@ -78,6 +78,7 @@ import SearchInput from '@/components/paginacion/searchInput.vue'
 const store = useMotivoStore();
 const selectedMotivo = ref(null);
 const showMotivoModal = ref(false);
+const triggerElement = ref(null);
 
 // --- Nuevo Estado Local para Paginación/Búsqueda ---
 const currentPage = ref(1);
@@ -98,7 +99,10 @@ watch([currentPage, pageSize, searchTerm], () => {
     fetchData();
 });
 
-const openModal = (motivo = null) => {
+const openModal = (motivo = null, event = null) => {
+    if (event) {
+        triggerElement.value = event.currentTarget;
+    }
     selectedMotivo.value = motivo;
     showMotivoModal.value = true;
 };
@@ -107,6 +111,9 @@ const closeModal = () => {
     showMotivoModal.value = false;
     selectedMotivo.value = null;
     fetchData();
+    if (triggerElement.value) {
+        triggerElement.value.focus();
+    }
 };
 
 const deleteMotivo = async (id) => {

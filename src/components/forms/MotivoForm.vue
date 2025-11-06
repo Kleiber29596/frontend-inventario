@@ -14,7 +14,12 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Tipo</label>
-                            <input type="text" class="form-control" v-model="form.tipo" placeholder="Ingrese el tipo" required>
+                           <select name="tipo" class="form-select" v-model="form.tipo" required>
+                            <option value="Asignacion">Asignacion</option>
+                            <option value="Desincorporacion">Desincorporacion</option>
+                           </select>
+                            
+                            
                         </div>
                         <div class="mb-3">
                             <label class="form-check form-switch">
@@ -92,11 +97,9 @@ watch(() => props.showModal, (newVal) => {
 const submitForm = async () => {
     try {
         if (isEditing.value) {
-            console.warn('Update Motivo functionality not implemented in store.');
-            // await store.updateMotivo(form.value.id, form.value);
+            await store.updateMotivo(form.value.id, form.value);
         } else {
-            console.warn('Create Motivo functionality not implemented in store.');
-            // await store.createMotivo(form.value);
+            await store.createMotivo(form.value);
         }
         emit('close');
     } catch (error) {
