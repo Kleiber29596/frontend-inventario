@@ -19,7 +19,7 @@ export const useEstatusStore = defineStore('estatus', {
             this.loading = true;
             try {
                 const params = { page, page_size: pageSize, q: searchTerm, tipo };
-                const response = await axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/`, { params });
+                const response = await axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipo`, { params });
                 this.estatusList = response.data.results || [];
                 this.totalItems = response.data.total || 0;
                 this.totalPages = response.data.total_pages || 1;
@@ -33,7 +33,8 @@ export const useEstatusStore = defineStore('estatus', {
         async createEstatus(estatus) {
             this.loading = true;
             try {
-                const response = await axios.post(`${BASE_URL}auxiliares/catalogo-bienes/estatus/`, estatus);
+                const { id, ...data } = estatus;
+                const response = await axios.post(`${BASE_URL}auxiliares/catalogo-bienes/estatus`, data);
                 await this.fetchEstatus(this.currentPage, 10, this.searchTerm);
                 useToast().showToast('Estatus creado exitosamente');
                 return response.data;
@@ -47,7 +48,8 @@ export const useEstatusStore = defineStore('estatus', {
         async updateEstatus(id, estatus) {
             this.loading = true;
             try {
-                const response = await axios.put(`${BASE_URL}auxiliares/catalogo-bienes/estatus/${id}/`, estatus);
+                const { id: estatusId, ...data } = estatus;
+                const response = await axios.put(`${BASE_URL}auxiliares/catalogo-bienes/estatus/${id}/`, data);
                 await this.fetchEstatus(this.currentPage, 10, this.searchTerm);
                 useToast().showToast('Estatus actualizado exitosamente');
                 return response.data;

@@ -40,8 +40,8 @@
                                     <td>{{ persona.primer_apellido }}</td>
                                     <td>{{ persona.cargo }}</td>
                                     <td>
-                                        <span :class="['badge', persona.activo ? 'bg-success' : 'bg-danger']">
-                                            {{ persona.activo ? 'Sí' : 'No' }}
+                                        <span :class="['badge', persona.Estado ? 'bg-success' : 'bg-danger']">
+                                            {{ persona.Estado ? 'Sí' : 'No' }}
                                         </span>
                                     </td>
                                     <td>
@@ -92,10 +92,6 @@
                                     <input type="text" class="form-control" v-model="form.primer_nombre" placeholder="Juan" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Segundo Nombre (Opcional)</label>
-                                    <input type="text" class="form-control" v-model="form.segundo_nombre" placeholder="Carlos">
-                                </div>
-                                <div class="col-md-6 mb-3">
                                     <label class="form-label">Primer Apellido *</label>
                                     <input type="text" class="form-control" v-model="form.primer_apellido" placeholder="Perez" required>
                                 </div>
@@ -113,7 +109,7 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" v-model="form.activo">
+                                        <input class="form-check-input" type="checkbox" v-model="form.Estado">
                                         <span class="form-check-label">Activo</span>
                                     </label>
                                 </div>
@@ -157,12 +153,11 @@ const form = reactive({
     nacionalidad: 'V',
     cedula: '',
     primer_nombre: '',
-    segundo_nombre: null,
     primer_apellido: '',
     correo: '',
     num_contacto: '',
     cargo: '',
-    activo: true,
+    Estado: true,
 });
 
 const fetchData = () => {
@@ -176,8 +171,8 @@ watch([currentPage, pageSize, searchTerm], fetchData, { immediate: false });
 const resetForm = () => {
     Object.assign(form, {
         id: null, nacionalidad: 'V', cedula: '', primer_nombre: '',
-        segundo_nombre: null, primer_apellido: '', correo: '',
-        num_contacto: '', cargo: '', activo: true,
+       primer_apellido: '', correo: '',
+        num_contacto: '', cargo: '', Estado: true,
     });
 };
 

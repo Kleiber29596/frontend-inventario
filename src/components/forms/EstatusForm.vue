@@ -14,7 +14,12 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Tipo de Estatus</label>
-                            <input type="text" class="form-control" v-model="form.tipo_estatus" placeholder="Ingrese el tipo de estatus" required>
+                            <select class="form-select" v-model="form.tipo_estatus" required>
+                                <option value="" disabled>Seleccione un tipo</option>
+                                <option value="bienes">Bienes</option>
+                                <option value="Asignacion">Asignación</option>
+                                <option value="desincorporacion">Desincorporación</option>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer">

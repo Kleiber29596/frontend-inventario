@@ -25,10 +25,7 @@
                                 <label class="form-label">Primer Nombre</label>
                                 <input type="text" class="form-control" v-model="form.primer_nombre" placeholder="Juan" required>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Segundo Nombre (Opcional)</label>
-                                <input type="text" class="form-control" v-model="form.segundo_nombre" placeholder="Carlos">
-                            </div>
+                
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Primer Apellido</label>
                                 <input type="text" class="form-control" v-model="form.primer_apellido" placeholder="Perez" required>
@@ -47,7 +44,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" v-model="form.activo">
+                                    <input class="form-check-input" type="checkbox" v-model="form.Estado">
                                     <span class="form-check-label">Activo</span>
                                 </label>
                             </div>
@@ -87,12 +84,11 @@ const form = ref({
     nacionalidad: '',
     cedula: '',
     primer_nombre: '',
-    segundo_nombre: null,
     primer_apellido: '',
     correo: '',
     num_contacto: '',
     cargo: '',
-    activo: true,
+    Estado: true,
 });
 
 const personaModal = ref(null);
@@ -117,12 +113,11 @@ watch(() => props.showModal, (newVal) => {
                 nacionalidad: '',
                 cedula: '',
                 primer_nombre: '',
-                segundo_nombre: null,
                 primer_apellido: '',
                 correo: '',
                 num_contacto: '',
                 cargo: '',
-                activo: true,
+                Estado: true,
             };
         }
         modalInstance.show();
