@@ -16,7 +16,7 @@
                             <label class="form-label">Marca</label>
                             <SelectVue 
                                 v-model="form.marca"
-                                :options="marcaStore.marcas"
+                                :options="modeloStore.marcas"
                                 placeholder="Seleccione una marca"
                                 label="descripcion"
                                 track-by="id"

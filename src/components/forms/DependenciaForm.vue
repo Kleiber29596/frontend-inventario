@@ -80,8 +80,7 @@ const submitForm = async () => {
         if (isEditing.value) {
             await store.updateDependencia(form.value.id, { nombre: form.value.nombre });
         } else {
-            console.warn('Create Dependencia functionality not explicitly defined in API.');
-            // await store.createDependencia(form.value);
+            await store.createDependencia(form.value);
         }
         emit('close');
     } catch (error) {

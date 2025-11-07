@@ -18,7 +18,7 @@ export const useDependenciaStore = defineStore('dependencia', {
         async fetchDependencias(page = 1, pageSize = 10, searchTerm = '') {
             this.loading = true;
             try {
-                const response = await axios.get(`${BASE_URL}auxiliares/listar_dependencias?page=${page}&page_size=${pageSize}&q=${searchTerm}`);
+                const response = await axios.get(`${BASE_URL}auxiliares/dependencias/listar?page=${page}&page_size=${pageSize}&q=${searchTerm}`);
                 this.dependencias = response.data.results || [];
                 this.totalItems = response.data.total || 0;
                 this.totalPages = response.data.total_pages || 1;
@@ -32,7 +32,7 @@ export const useDependenciaStore = defineStore('dependencia', {
         async createDependencia(dependencia) {
             this.loading = true;
             try {
-                const response = await axios.post(`${BASE_URL}auxiliares/crear_dependencia`, dependencia);
+                const response = await axios.post(`${BASE_URL}auxiliares/dependencias/crear`, dependencia);
                 this.fetchDependencias(1, 10, '');
                 return response.data;
             } catch (error) {
@@ -45,7 +45,7 @@ export const useDependenciaStore = defineStore('dependencia', {
         async updateDependencia(id, dependencia) {
             this.loading = true;
             try {
-                const response = await axios.put(`${BASE_URL}auxiliares/editar_dependencia/${id}`, dependencia);
+                const response = await axios.put(`${BASE_URL}auxiliares/dependencias/actualizar/${id}`, dependencia);
                 this.fetchDependencias(1, 10, '');
                 return response.data;
             } catch (error) {

@@ -1,90 +1,91 @@
 <template>
     <main class="page-wrapper">
         <!-- Page header -->
-        <HeaderPage :icon="['fas', 'boxes']" text="Tipos de Bien" />
+        <HeaderPage :icon="['fas', 'tags']" text="Tipos de Bien" />
 
         <div class="page-body mt-3 mb-3">
-            <div class="ps-3 pe-3">
+            <div class="container-xl">
                 <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Listado de Tipos de Bien</h3>
-                        <div class="ms-auto">
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Buscar..." v-model="store.searchTerm" @keyup.enter="search">
-                                <button class="btn btn-outline-secondary" type="button" @click="search">Buscar</button>
-                                <button class="btn btn-primary ms-2" @click="openModal()">Nuevo Tipo de Bien</button>
-                            </div>
+                    <div class="card-header d-flex justify-content-between">
+                        <p class="text-secondary m-0">Listado de Tipos de Bien</p>
+                        <div class="d-flex gap-2">
+                            <SearchInput v-model="searchTerm" />
+                            <button class="btn btn-primary ms-2" @click="openModal()">Nuevo Tipo de Bien</button>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Descripción</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-if="store.loading">
-                                        <td colspan="3" class="text-center">Cargando...</td>
-                                    </tr>
-                                    <tr v-for="tipoBien in store.tiposBien" :key="tipoBien.id">
-                                        <td>{{ tipoBien.id }}</td>
-                                        <td>{{ tipoBien.descripcion }}</td>
-                                        <td>
-                                            <a class="btn btn-action" @click="openModal(tipoBien)">
-                                                <IconEdit size="24" stroke-width="1.5" />
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th class="w-1">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-if="store.loading">
+                                    <td colspan="2" class="text-center">Cargando...</td>
+                                </tr>
+                                <tr v-else-if="store.tiposBien.length === 0">
+                                    <td colspan="2" class="text-center">No se encontraron tipos de bien.</td>
+                                </tr>
+                                <tr v-for="tipoBien in store.tiposBien" :key="tipoBien.id">
+                                    <td>{{ tipoBien.descripcion }}</td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <a href="#" class="btn btn-action" @click.prevent="openModal(tipoBien)" title="Editar">
+                                                <IconEdit size="20" stroke-width="1.5" />
                                             </a>
-                                            <a class="btn btn-action" @click="deleteTipoBien(tipoBien.id)">
-                                                <IconTrash size="24" stroke-width="1.5" />
+                                            <a href="#" class="btn btn-action text-danger" @click.prevent="deleteTipoBien(tipoBien.id)" title="Eliminar">
+                                                <IconTrash size="20" stroke-width="1.5" />
                                             </a>
-                                        </td>
-                                    </tr>
-                                    <tr v-if="!store.loading && store.tiposBien.length === 0">
-                                        <td colspan="3" class="text-center">No se encontraron tipos de bien.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="card-footer d-flex align-items-center">
-                        <p class="m-0 text-muted">Mostrando <span>{{ store.tiposBien.length }}</span> de <span>{{ store.paginacion.total }}</span> entradas</p>
-                        <ul class="pagination m-0 ms-auto">
-                            <li class="page-item" :class="{ disabled: !store.paginacion.anterior }">
-                                <a class="page-link" href="#" @click.prevent="changePage(store.paginacion.pagina_actual - 1)">anterior</a>
-                            </li>
-                            <li class="page-item" v-for="page in store.paginacion.paginas" :key="page" :class="{ active: page === store.paginacion.pagina_actual }">
-                                <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
-                            </li>
-                            <li class="page-item" :class="{ disabled: !store.paginacion.siguiente }">
-                                <a class="page-link" href="#" @click.prevent="changePage(store.paginacion.pagina_actual + 1)">siguiente</a>
-                            </li>
-                        </ul>
+                    <div class="card-footer">
+                        <Pagination v-model:page="currentPage" v-model:pageSize="pageSize" :total="store.totalItems" />
                     </div>
                 </div>
             </div>
         </div>
 
         <TipoBienForm :tipoBien="selectedTipoBien" :showModal="showTipoBienModal" @close="closeModal" />
-
     </main>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import Swal from 'sweetalert2';
 import { useTipoBienStore } from '@/stores/tipoBienStore';
 import HeaderPage from '@/components/page/header/Component.vue';
 import TipoBienForm from '@/components/forms/TipoBienForm.vue';
 import { IconEdit, IconTrash } from '@tabler/icons-vue';
+import Pagination from '@/components/paginacion/paginacion.vue';
+import SearchInput from '@/components/paginacion/searchInput.vue';
 
 const store = useTipoBienStore();
 const selectedTipoBien = ref(null);
 const showTipoBienModal = ref(false);
 
+// --- Estado Local para Paginación/Búsqueda ---
+const currentPage = ref(1);
+const pageSize = ref(10);
+const searchTerm = ref('');
+
+// --- Función centralizada para cargar los datos ---
+const fetchData = () => {
+    store.fetchTiposBien(currentPage.value, pageSize.value, searchTerm.value);
+};
+
 onMounted(() => {
-    store.fetchTiposBien();
+    fetchData();
+});
+
+// --- Watchers para Paginación y Búsqueda ---
+watch([currentPage, pageSize, searchTerm], () => {
+    fetchData();
 });
 
 const openModal = (tipoBien = null) => {
@@ -95,23 +96,23 @@ const openModal = (tipoBien = null) => {
 const closeModal = () => {
     showTipoBienModal.value = false;
     selectedTipoBien.value = null;
-    store.fetchTiposBien();
+    fetchData(); // Recargamos los datos de la página actual
 };
 
 const deleteTipoBien = async (id) => {
-    if (confirm('¿Está seguro de que desea eliminar este tipo de bien?')) {
-        await store.deleteTipoBien(id);
-        store.fetchTiposBien();
-    }
-};
-
-const search = () => {
-    store.fetchTiposBien(1, store.searchTerm);
-};
-
-const changePage = (page) => {
-    if (page > 0 && page <= store.paginacion.paginas) {
-        store.fetchTiposBien(page, store.searchTerm);
-    }
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "No podrás revertir esta acción.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, ¡eliminar!',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            store.deleteTipoBien(id);
+        }
+    });
 };
 </script>

@@ -9,10 +9,18 @@
                 <form @submit.prevent="submitForm">
                     <div class="modal-body">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Cédula</label>
-                                <input type="text" class="form-control" v-model="form.cedula" placeholder="V-12345678" required>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Nacionalidad</label>
+                                <select class="form-select" v-model="form.nacionalidad" required>
+                                    <option value="V">V</option>
+                                    <option value="E">E</option>
+                                </select>
                             </div>
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">Cédula</label>
+                                <input type="text" class="form-control" v-model="form.cedula" placeholder="12345678" required>
+                            </div>
+
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Primer Nombre</label>
                                 <input type="text" class="form-control" v-model="form.primer_nombre" placeholder="Juan" required>
@@ -24,10 +32,6 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Primer Apellido</label>
                                 <input type="text" class="form-control" v-model="form.primer_apellido" placeholder="Perez" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Segundo Apellido (Opcional)</label>
-                                <input type="text" class="form-control" v-model="form.segundo_apellido" placeholder="Gomez">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Correo</label>
@@ -80,11 +84,11 @@ const emit = defineEmits(['close']);
 const store = usePersonaStore();
 const form = ref({
     id: null,
+    nacionalidad: '',
     cedula: '',
     primer_nombre: '',
     segundo_nombre: null,
     primer_apellido: '',
-    segundo_apellido: null,
     correo: '',
     num_contacto: '',
     cargo: '',
@@ -110,11 +114,11 @@ watch(() => props.showModal, (newVal) => {
         } else {
             form.value = {
                 id: null,
+                nacionalidad: '',
                 cedula: '',
                 primer_nombre: '',
                 segundo_nombre: null,
                 primer_apellido: '',
-                segundo_apellido: null,
                 correo: '',
                 num_contacto: '',
                 cargo: '',

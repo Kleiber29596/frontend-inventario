@@ -85,6 +85,7 @@ const fetchData = () => {
 
 onMounted(() => {
     fetchData();
+    store.fetchMarcas();
 });
 
 // --- Watchers para Paginación y Búsqueda ---

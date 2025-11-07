@@ -79,10 +79,10 @@ const submitForm = async () => {
     try {
         if (isEditing.value) {
             console.warn('Update Color functionality not implemented in store.');
-            // await store.updateColor(form.value.id, form.value);
+            await store.updateColor(form.value.id, form.value);
         } else {
             console.warn('Create Color functionality not implemented in store.');
-            // await store.createColor(form.value);
+            await store.createColor(form.value);
         }
         emit('close');
     } catch (error) {

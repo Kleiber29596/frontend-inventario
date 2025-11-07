@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
+import { useToast } from '@/stores/useToast';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -8,7 +9,6 @@ export const usePersonaStore = defineStore('persona', {
         personas: [],
         persona: null,
         loading: false,
-        error: null,
         searchTerm: '',
         totalItems: 0,
         totalPages: 1,
@@ -18,13 +18,15 @@ export const usePersonaStore = defineStore('persona', {
         async fetchPersonas(page = 1, pageSize = 10, searchTerm = '') {
             this.loading = true;
             try {
-                const response = await axios.get(`${BASE_URL}personas/listar?page=${page}&page_size=${pageSize}&q=${searchTerm}`);
+                const response = await axios.get(`${BASE_URL}personas/listar`, {
+                    params: { page, page_size: pageSize, q: searchTerm }
+                });
                 this.personas = response.data.results || [];
                 this.totalItems = response.data.total || 0;
                 this.totalPages = response.data.total_pages || 1;
                 this.currentPage = response.data.current_page || 1;
             } catch (error) {
-                this.error = error;
+                useToast().showToast('Error al obtener las personas', 'error');
             } finally {
                 this.loading = false;
             }
@@ -33,10 +35,11 @@ export const usePersonaStore = defineStore('persona', {
             this.loading = true;
             try {
                 const response = await axios.post(`${BASE_URL}personas/crear`, persona);
-                this.fetchPersonas(1, 10, '');
+                await this.fetchPersonas(this.currentPage, 10, this.searchTerm);
+                useToast().showToast('Persona creada exitosamente');
                 return response.data;
             } catch (error) {
-                this.error = error;
+                useToast().showToast('Error al crear la persona', 'error');
                 throw error;
             } finally {
                 this.loading = false;
@@ -46,10 +49,11 @@ export const usePersonaStore = defineStore('persona', {
             this.loading = true;
             try {
                 const response = await axios.put(`${BASE_URL}personas/actualizar/${id}`, persona);
-                this.fetchPersonas(1, 10, '');
+                await this.fetchPersonas(this.currentPage, 10, this.searchTerm);
+                useToast().showToast('Persona actualizada exitosamente');
                 return response.data;
             } catch (error) {
-                this.error = error;
+                useToast().showToast('Error al actualizar la persona', 'error');
                 throw error;
             } finally {
                 this.loading = false;
@@ -58,10 +62,11 @@ export const usePersonaStore = defineStore('persona', {
         async deletePersona(id) {
             this.loading = true;
             try {
-                await axios.delete(`${BASE_URL}personas/Eliminar/${id}`);
-                this.fetchPersonas(1, 10, '');
+                await axios.delete(`${BASE_URL}personas/eliminar/${id}`);
+                await this.fetchPersonas(this.currentPage, 10, this.searchTerm);
+                useToast().showToast('Persona eliminada exitosamente');
             } catch (error) {
-                this.error = error;
+                useToast().showToast('Error al eliminar la persona', 'error');
                 throw error;
             } finally {
                 this.loading = false;
