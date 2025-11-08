@@ -16,7 +16,7 @@
                         <label class="form-label">Condiciones de los bienes</label>
                         <ul class="list-group">
                             <li v-for="detalle in devolucionForm.detalles" :key="detalle.id" class="list-group-item">
-                                <strong>{{ detalle.bien.serial_bien }}</strong> - {{ detalle.bien.marca }} {{ detalle.bien.modelo }}
+                                <strong>{{ detalle.bien.serial_bien }}</strong> - {{ detalle.bien.tipo_bien.descripcion }}- {{ detalle.bien.marca.descripcion }} {{ detalle.bien.modelo.descripcion }}
                                 <select v-model="detalle.condicion_devolucion" class="form-select mt-2">
                                     <option v-for="estado in store.catalogs.estadosFisicos" :key="estado.id" :value="estado.id">{{ estado.nombre}}</option>
                                 </select>

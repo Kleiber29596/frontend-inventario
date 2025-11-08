@@ -163,22 +163,17 @@ const loading = ref(false);
 const error = ref(null);
 
 watch(() => props.bienData, async (newVal) => {
-  if (newVal) {
-    // Asegurarse de que los catálogos están cargados
-    if (bienesStore.catalogs.tiposBien.length === 0) {
-      await bienesStore.catalogos_bienes();
-    }
-
-    const catalogs = bienesStore.catalogs;
+  if (props.isEdit && newVal) {
+    // Modo Edición: La API ya nos da los objetos completos, así que los asignamos directamente.
     form.serial_bien = newVal.serial_bien || '';
     form.serial_equipo = newVal.serial_equipo || '';
-    form.color = catalogs.colores.find(c => c.descripcion === newVal.color) || null;
-    form.tipo_bien_id = catalogs.tiposBien.find(t => t.descripcion === newVal.tipo_bien) || null;
-    form.categoria_id = catalogs.categorias.find(c => c.descripcion === newVal.categoria) || null;
-    form.marca_id = catalogs.marcas.find(m => m.descripcion === newVal.marca) || null;
-    form.modelo_id = catalogs.modelos.find(m => m.descripcion === newVal.modelo) || null;
-    form.estado_fisico_id = catalogs.estadosFisicos.find(e => e.nombre === newVal.estado_fisico) || null;
-    form.estatus_id = catalogs.estatus.find(e => e.descripcion === newVal.estatus) || null;
+    form.color = newVal.color || null;
+    form.tipo_bien_id = newVal.tipo_bien || null;
+    form.categoria_id = newVal.categoria || null;
+    form.marca_id = newVal.marca || null;
+    form.modelo_id = newVal.modelo || null;
+    form.estado_fisico_id = newVal.estado_fisico || null;
+    form.estatus_id = newVal.estatus || null;
     form.medida = newVal.medida || '';
     form.valor_monetario = newVal.valor_monetario || '';
     form.fecha_adquisicion = (newVal.fecha_adquisicion || '').slice(0, 10);
@@ -244,5 +239,3 @@ onMounted(() => {
   bienesStore.catalogos_bienes();
 });
 </script>
-
-

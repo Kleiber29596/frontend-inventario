@@ -7,13 +7,11 @@ export const useAsignacionStore = defineStore('asignacion', {
   state: () => ({
     asignaciones: [],
     bienes: [],
-    paginacion: {
-      total: 0,
-      paginas: 0,
-      pagina_actual: 1,
-      siguiente: null,
-      anterior: null,
-    },
+    searchTerm: '',
+    totalItems: 0,
+    totalPages: 1,
+    currentPage: 1,
+
     loading: false,
     searchTerm: '',
     catalogs: {
@@ -26,24 +24,21 @@ export const useAsignacionStore = defineStore('asignacion', {
     },
   }),
   actions: {
-    async fetchAsignaciones(page = 1, search = '') {
+    async fetchAsignaciones(page = 1, pageSize, search = '') {
       this.loading = true;
       try {
-        const response = await axios.get(`${BASE_URL}asignaciones/listar`, {
+        const response = await axios.get(`${BASE_URL}asignaciones/asignaciones`, {
           params: {
             page,
+            pageSize,
             q: search,
           },
 
         });
         this.asignaciones = response.data.results || [];
-        this.paginacion = {
-          total: response.data.total,
-          paginas: response.data.paginas,
-          pagina_actual: response.data.pagina_actual,
-          siguiente: response.data.siguiente,
-          anterior: response.data.anterior,
-        };
+        this.totalItems = response.data.total || 0;
+        this.totalPages = response.data.total_pages || 1;
+        this.currentPage = response.data.current_page || 1;
       } catch (error) {
         console.error("Error al obtener asignaciones:", error);
         this.asignaciones = [];
@@ -91,15 +86,52 @@ export const useAsignacionStore = defineStore('asignacion', {
         this.loading = false;
       }
     },
-    async fetchCatalogos() {
+
+    async fetchAsignacionById(id) {
+      try {
+        const response = await axios.get(`${BASE_URL}asignaciones/asignaciones/${id}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error al obtener la asignación ${id}:`, error);
+        throw error;
+      }
+    },
+
+    async setupEditAsignacion(id) {
       this.loading = true;
       try {
+        // 1. Cargar catálogos, bienes y la asignación específica en paralelo
+        const [_, __, asignacionData] = await Promise.all([
+          this.fetchCatalogos(),
+          this.fetchBienes(), // Aseguramos que la lista de bienes para el select esté cargada
+          this.fetchAsignacionById(id)
+        ]);
+  
+        // 2. Cargar las personas DESPUÉS de saber el departamento
+        if (asignacionData.departamento_id) {
+          await this.fetchPersonasPorDepartamento(asignacionData.departamento_id);
+        }
+  
+        // 3. Devolver los datos de la asignación para que el componente los use
+        return asignacionData;
+      } catch (error) {
+        console.error("Error al configurar la edición de la asignación:", error);
+        throw error; // Propagar el error para que el componente pueda manejarlo
+      } finally {
+        this.loading = false;
+      }
+    },
+
+
+    async fetchCatalogos() {
+      // No es necesario 'this.loading' aquí si la acción principal ya lo gestiona
+      try {
         const [departamentosRes, estatusAsignacionRes, estatusBienesRes, motivosRes, estadosFisicosRes] = await Promise.all([
-          axios.get(`${BASE_URL}auxiliares/listar_dependencias`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipo?tipo=asignacion`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipo?tipo=bienes`),
-          axios.get(`${BASE_URL}auxiliares/motivos?tipo=Asignacion`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estados_fisicos`)
+          axios.get(`${BASE_URL}auxiliares/dependencias/select`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo=Asignacion`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo=Bienes`),
+          axios.get(`${BASE_URL}auxiliares/motivos/select?tipo=Asignacion`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estados_fisicos/select`)
         ]);
         this.catalogs.departamentos = Array.isArray(departamentosRes.data) ? departamentosRes.data : [];
         this.catalogs.estatus       = Array.isArray(estatusAsignacionRes.data) ? estatusAsignacionRes.data : [];
@@ -114,8 +146,6 @@ export const useAsignacionStore = defineStore('asignacion', {
         this.catalogs.estatusBienes = [];
         this.catalogs.motivos = [];
         this.catalogs.estadosFisicos = [];
-      } finally {
-        this.loading = false;
       }
     },
 
@@ -125,7 +155,7 @@ export const useAsignacionStore = defineStore('asignacion', {
         return;
       }
       try {
-        const response = await axios.get(`${BASE_URL}personas/listar`, {
+        const response = await axios.get(`${BASE_URL}personas/select`, {
           params: { departamento_id: departamentoId },
         });
         this.catalogs.personas = Array.isArray(response.data) ? response.data : response.data.items || [];
@@ -148,9 +178,12 @@ export const useAsignacionStore = defineStore('asignacion', {
         }
 
         // 2. Marcar la asignación como devuelta
-        await axios.put(`${BASE_URL}asignaciones/${devolucionForm.asignacion_id}/devolucion`);
+        await axios.put(`${BASE_URL}asignaciones/${devolucionForm.asignacion_id}/devolucion`, {
+          fecha_fin: devolucionForm.fecha_devolucion
+        });
 
         // 3. Refrescar listado
+        this.fetchCatalogos(),
         await this.fetchAsignaciones();
       } catch (error) {
         console.error("Error al guardar la devolución:", error);

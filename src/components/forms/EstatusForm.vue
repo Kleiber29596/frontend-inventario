@@ -16,9 +16,9 @@
                             <label class="form-label">Tipo de Estatus</label>
                             <select class="form-select" v-model="form.tipo_estatus" required>
                                 <option value="" disabled>Seleccione un tipo</option>
-                                <option value="bienes">Bienes</option>
+                                <option value="Bienes">Bienes</option>
                                 <option value="Asignacion">Asignación</option>
-                                <option value="desincorporacion">Desincorporación</option>
+                                <option value="Desincorporacion">Desincorporación</option>
                             </select>
                         </div>
                     </div>

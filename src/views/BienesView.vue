@@ -16,7 +16,7 @@
             <p class="text-secondary m-0">Listado de Bienes</p>
             <div class="d-flex gap-2">
               <SearchInput v-model="searchTerm" />
-              <a href="#" class="btn btn-primary ms-2" title="Agregar bien" @click.prevent="openForm(false)">Agregar</a>
+              <a href="#" class="btn btn-primary ms-2" title="Agregar bien" @click.prevent="openForm()">Agregar</a>
             </div>
           </div>
 
@@ -26,7 +26,6 @@
                 <tr>
                   <th>Código</th>
                   <th>Tipo</th>
-                  <th>Categoría</th>
                   <th>Marca</th>
                   <th>Modelo</th>
                   <th>Estado Físico</th>
@@ -41,13 +40,12 @@
                 </tr>
                 <tr v-for="bien in store.bienes" :key="bien.id">
                   <td>{{ bien.serial_bien }}</td>
-                  <td>{{ bien.tipo_bien }}</td>
-                  <td>{{ bien.categoria }}</td>
-                  <td>{{ bien.marca }}</td>
-                  <td>{{ bien.modelo }}</td>
-                  <td>{{ bien.estado_fisico }}</td>
-                  <td>{{ bien.fecha_adquisicion }}</td>
-                  <td><span class="badge bg-success">{{bien.estatus}}</span></td>
+                  <td>{{ bien.tipo_bien.descripcion }}</td>
+                  <td>{{ bien.marca.descripcion }}</td>
+                  <td>{{ bien.modelo.descripcion }}</td>
+                  <td>{{ bien.estado_fisico.nombre}}</td>
+                  <td>{{ bien.fecha_adquisicion}}</td>
+                  <td><span class="badge bg-success">{{bien.estatus.descripcion}}</span></td>
                   <td>
                     <a class="btn btn-action" @click.prevent="openForm(true, bien)" title="Editar">
                       <IconEdit size="20" stroke-width="1.5" />
@@ -120,10 +118,23 @@ watch([currentPage, pageSize, searchTerm], () => {
     fetchData();
 });
 
-const openForm = (edit = false, data = null) => {
+const openForm = async (edit = false, data = null) => {
   isEdit.value = edit;
-  bienData.value = data;
-  showForm.value = true;
+  if (edit && data) {
+    // Modo Edición: Carga todo lo necesario antes de mostrar el formulario
+    try {
+      // Llama a la acción maestra que carga catálogos y el bien específico
+      const bienParaEditar = await store.setupEditBien(data.id);
+      bienData.value = bienParaEditar; // Pasa los datos completos y "frescos" al formulario
+      showForm.value = true;
+    } catch (error) {
+      console.error("Error al preparar la edición del bien:", error);
+    }
+  } else {
+    // Modo Creación: Simplemente abre el formulario vacío
+    bienData.value = null;
+    showForm.value = true;
+  }
 };
 
 const closeForm = () => {

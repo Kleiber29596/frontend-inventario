@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-export const useCheckServiceStore = defineStore('alerts', {
+export const useAlertsStore = defineStore('alerts', {
     state: () => ({
         alerts: [], // Lista de alertas activas
     }),

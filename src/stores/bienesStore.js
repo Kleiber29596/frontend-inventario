@@ -26,7 +26,7 @@ export const useBienesStore = defineStore('bienes', {
     async fetchBienes(page = 1, pageSize = 10, searchTerm = '') {
       this.loading = true;
       try {
-        const response = await axios.get(`${BASE_URL}bienes/listar`, {
+        const response = await axios.get(`${BASE_URL}bienes/bienes`, {
           params: {
             page,
             page_size: pageSize,
@@ -71,8 +71,22 @@ export const useBienesStore = defineStore('bienes', {
       }
     },
 
+    async fetchBienById(id) {
+      try {
+        const response = await axios.get(`${BASE_URL}bienes/bienes/${id}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error al obtener el bien ${id}:`, error);
+        throw error;
+      }
+    },
+
+    async setupEditBien(id) {
+      const [_, bienData] = await Promise.all([this.catalogos_bienes(), this.fetchBienById(id)]);
+      return bienData;
+    },
+
     async catalogos_bienes() {
-      if (this.catalogs.tiposBien.length > 0) return;
       this.loading = true;
       try {
         const [
@@ -84,25 +98,30 @@ export const useBienesStore = defineStore('bienes', {
           coloresResponse,
           estatusResponse,
         ] = await Promise.all([
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/categorias`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipos_bien`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/marcas`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/modelos`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estados_fisicos`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/colores`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipo?tipo=bienes`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/categorias/select`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/tipos_bien/select`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/marcas/select`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/modelos/select`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estados_fisicos/select`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/colores/select`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo=bienes`),
 
         ]);
 
-        this.catalogs.categorias = catsResponse.data;
-        this.catalogs.tiposBien = tiposBienResponse.data;
-        this.catalogs.marcas = marcasResponse.data;
-        this.catalogs.modelos = modelosResponse.data;
-        this.catalogs.estadosFisicos = estadosFisicosResponse.data;
-        this.catalogs.colores = coloresResponse.data;
-        this.catalogs.estatus = estatusResponse.data;
+        // --- APLICA LA LÓGICA DEFENSIVA AQUÍ ---
+        this.catalogs.categorias = Array.isArray(catsResponse.data) ? catsResponse.data : [];
+        this.catalogs.tiposBien = Array.isArray(tiposBienResponse.data) ? tiposBienResponse.data : [];
+        this.catalogs.marcas = Array.isArray(marcasResponse.data) ? marcasResponse.data : [];
+        this.catalogs.modelos = Array.isArray(modelosResponse.data) ? modelosResponse.data : [];
+        this.catalogs.estadosFisicos = Array.isArray(estadosFisicosResponse.data) ? estadosFisicosResponse.data : [];
+        this.catalogs.colores = Array.isArray(coloresResponse.data) ? coloresResponse.data : [];
+        this.catalogs.estatus = Array.isArray(estatusResponse.data) ? estatusResponse.data : [];
       } catch (error) {
         console.error("Error al obtener catálogos de bienes:", error);
+        // Asegurarse de que los catálogos sean arrays vacíos en caso de error
+        Object.keys(this.catalogs).forEach(key => {
+          this.catalogs[key] = [];
+        });
       } finally {
         this.loading = false;
       }

@@ -49,7 +49,7 @@ export const useEstatusStore = defineStore('estatus', {
             this.loading = true;
             try {
                 const { id: estatusId, ...data } = estatus;
-                const response = await axios.put(`${BASE_URL}auxiliares/catalogo-bienes/estatus/${id}/`, data);
+                const response = await axios.put(`${BASE_URL}auxiliares/catalogo-bienes/estatus/${id}`, data);
                 await this.fetchEstatus(this.currentPage, 10, this.searchTerm);
                 useToast().showToast('Estatus actualizado exitosamente');
                 return response.data;
@@ -63,7 +63,7 @@ export const useEstatusStore = defineStore('estatus', {
         async deleteEstatus(id) {
             this.loading = true;
             try {
-                await axios.delete(`${BASE_URL}auxiliares/catalogo-bienes/estatus/${id}/`);
+                await axios.delete(`${BASE_URL}auxiliares/catalogo-bienes/estatus/${id}`);
                 await this.fetchEstatus(this.currentPage, 10, this.searchTerm);
                 useToast().showToast('Estatus eliminado exitosamente');
             } catch (error) {

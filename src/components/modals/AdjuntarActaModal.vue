@@ -23,9 +23,11 @@
 
 <script setup>
 import { ref, watch } from 'vue';
+import { useDesincorporacionStore } from '@/stores/desincorporacionStore';
+import { useAlertsStore } from '@/stores/alerts';
 import { Modal } from 'bootstrap';
-import PostService from '@/services/PostService';
-import { useCheckServiceStore } from '@/stores/alerts';
+
+const desincorporacionStore = useDesincorporacionStore();
 
 const props = defineProps({
     desincorporacion: Object,
@@ -34,7 +36,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'actaAdjuntada']);
 
 const selectedFile = ref(null);
-const alertsStore = useCheckServiceStore();
+const alertsStore = useAlertsStore();
 
 const handleFileUpload = (event) => {
     selectedFile.value = event.target.files[0];
@@ -43,16 +45,24 @@ const handleFileUpload = (event) => {
 const submitActa = async () => {
     if (selectedFile.value && props.desincorporacion) {
         try {
-            await PostService.uploadActa(props.desincorporacion.id, selectedFile.value);
-            alertsStore.addNotification('success', 'Acta adjuntada y desincorporación aprobada con éxito.');
+            await desincorporacionStore.cargarActa(props.desincorporacion.id, selectedFile.value);
+            alertsStore.addAlert({
+                type: 'success',
+                title: 'Éxito',
+                message: 'Acta adjuntada y desincorporación aprobada con éxito.'
+            });
             closeAndResetModal();
             emit('actaAdjuntada'); // Notify parent to refresh list
         } catch (error) {
             console.error('Error al adjuntar acta:', error);
-            alertsStore.addNotification('danger', 'Error al adjuntar acta. Inténtalo de nuevo.');
+            alertsStore.addAlert({ type: 'danger', title: 'Error', message: 'Error al adjuntar acta. Inténtalo de nuevo.' });
         }
     } else {
-        alertsStore.addNotification('warning', 'Por favor, selecciona un archivo.');
+        alertsStore.addAlert({
+            type: 'warning',
+            title: 'Atención',
+            message: 'Por favor, selecciona un archivo.'
+        });
     }
 };
 
