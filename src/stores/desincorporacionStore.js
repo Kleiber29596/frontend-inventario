@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
+import { useToast } from '@/stores/useToast';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -47,9 +48,11 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
       try {
         await axios.post(`${BASE_URL}desincorporaciones/crear`, desincorporacion);
         await this.fetchDesincorporaciones(); // Refresh list
+        useToast().showToast('Desincorporación creada exitosamente');
       } catch (error) {
         console.error("Error al crear la desincorporación:", error);
         throw error;
+        useToast().showToast('Error al crear la desincorporación', 'error');
       } finally {
         this.loading = false;
       }
@@ -59,9 +62,11 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
       try {
         await axios.put(`${BASE_URL}desincorporaciones/actualizar/${id}`, desincorporacion);
         await this.fetchDesincorporaciones(); // Refresh list
+        useToast().showToast('Desincorporación actualizada exitosamente');
       } catch (error) {
         console.error("Error al actualizar la desincorporación:", error);
         throw error;
+        useToast().showToast('Error al actualizar la desincorporación', 'error');
       } finally {
         this.loading = false;
       }
@@ -99,8 +104,10 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
           },
         });
         await this.fetchDesincorporaciones(); // Refresh list
+        useToast().showToast('Acta cargada exitosamente');
       } catch (error) {
         console.error("Error al cargar el acta:", error);
+        useToast().showToast('Error al cargar el acta', 'error');
         throw error;
       } finally {
         this.loading = false;

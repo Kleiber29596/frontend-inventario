@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
+import { useToast } from '@/stores/useToast';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -67,9 +68,11 @@ export const useAsignacionStore = defineStore('asignacion', {
       try {
         await axios.post(`${BASE_URL}asignaciones/crear`, asignacion);
         await this.fetchAsignaciones(); // Refresh list
+        useToast().showToast('Asignación creada exitosamente');
       } catch (error) {
         console.error("Error al crear la asignación:", error);
         throw error;
+        useToast().showToast('Error al crear la asignación', 'error');
       } finally {
         this.loading = false;
       }
@@ -79,9 +82,11 @@ export const useAsignacionStore = defineStore('asignacion', {
       try {
         await axios.put(`${BASE_URL}asignaciones/actualizar/${id}`, asignacion);
         await this.fetchAsignaciones(); // Refresh list
+        useToast().showToast('Asignación actualizada exitosamente');
       } catch (error) {
         console.error("Error al actualizar la asignación:", error);
         throw error;
+        useToast().showToast('Error al actualizar la asignación', 'error');
       } finally {
         this.loading = false;
       }
@@ -185,9 +190,11 @@ export const useAsignacionStore = defineStore('asignacion', {
         // 3. Refrescar listado
         this.fetchCatalogos(),
         await this.fetchAsignaciones();
+        useToast().showToast('Devolución guardada exitosamente');
       } catch (error) {
         console.error("Error al guardar la devolución:", error);
         throw error;
+        useToast().showToast('Error al guardar la devolución', 'error');
       } finally {
         this.loading = false;
       }

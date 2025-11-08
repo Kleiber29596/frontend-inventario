@@ -173,7 +173,7 @@ const handleSubmit = async () => {
         estatus_id: formValue.estatus?.id,
         fecha_inicio: formValue.fecha_inicio,
         fecha_fin: formValue.fecha_fin, // This should be null on creation
-        motivo_id: formValue.motivo?.id,
+        motivo: formValue.motivo?.id, // Cambiado de motivo_id a motivo
         bienes: formValue.bienes_id.map(bien => ({
             bien_id: bien.id,
             condicion_retorno: ""

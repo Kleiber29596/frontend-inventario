@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
+import { useToast } from '@/stores/useToast';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -50,9 +51,11 @@ export const useBienesStore = defineStore('bienes', {
       try {
         await axios.post(`${BASE_URL}bienes/crear`, bien);
         await this.fetchBienes(1, 10, ''); // Refresh list
+        useToast().showToast('Bien creado exitosamente');
       } catch (error) {
         console.error("Error al crear el bien:", error);
         throw error;
+        useToast().showToast('Error al crear el bien', 'error');
       } finally {
         this.loading = false;
       }
@@ -63,9 +66,11 @@ export const useBienesStore = defineStore('bienes', {
       try {
         await axios.put(`${BASE_URL}bienes/editar/${id}`, bien);
         await this.fetchBienes(1, 10, ''); // Refresh list
+        useToast().showToast('Bien actualizado exitosamente');
       } catch (error) {
         console.error("Error al actualizar el bien:", error);
         throw error;
+        useToast().showToast('Error al actualizar el bien', 'error');
       } finally {
         this.loading = false;
       }
