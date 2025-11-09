@@ -19,6 +19,7 @@
                                 <option value="Bienes">Bienes</option>
                                 <option value="Asignacion">Asignación</option>
                                 <option value="Desincorporacion">Desincorporación</option>
+                                <option value="Solicitud">Solicitud</option>
                             </select>
                         </div>
                     </div>

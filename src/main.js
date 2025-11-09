@@ -1,6 +1,7 @@
 import './assets/css/styles.css';
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { useAccountStore } from '@/stores/account'; // Importa el store de la cuenta
 import App from './App.vue'
 import router from './router'
 import VueSweetalert2 from 'vue-sweetalert2';
@@ -31,6 +32,9 @@ app.use(router)
 app.use(pinia)
 app.use(VueQueryPlugin)
 app.use(VueSweetalert2)
+
+// Llama al store para asegurar que los interceptores de Axios se configuren
+useAccountStore();
 app.component("font-awesome-icon", FontAwesomeIcon)
 
 

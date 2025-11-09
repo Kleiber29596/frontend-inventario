@@ -9,6 +9,7 @@ import BienesView from '@/views/BienesView.vue'
 import PrestamosView from '@/views/PrestamosView.vue'
 import AsignacionView from '@/views/AsignacionView.vue'
 import DesincorporacionView from '@/views/DesincorporacionView.vue'
+import SolicitudesView from '@/views/SolicitudesView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -123,6 +124,14 @@ const router = createRouter({
       name: 'Bienes',
       component: BienesView
     },
+
+
+    {
+      path: '/solicitudes',
+      name: 'solicitudes',
+      component: SolicitudesView
+     
+    },
     
     {
       path: '/Prestamos',
@@ -218,6 +227,7 @@ const router = createRouter({
         requiredAuth: true
       }
     },
+
 
   ]
 })

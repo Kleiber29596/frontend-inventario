@@ -13,6 +13,9 @@ import ItemsSub from './NavBarOptionsItemsSub.vue';
       <!-- Bienes -->
       <Items :icon="['fas', 'layer-group']" name="Bienes" routs="/bienes" />
 
+      <!-- Solicitudes -->
+      <Items :icon="['fas', 'file-alt']" name="Solicitudes" routs="/solicitudes" />
+
       <!-- Movimientos -->
       <li>
         <ItemsSub name="Movimientos" :icon="['fas', 'exchange-alt']" active="#active3" />

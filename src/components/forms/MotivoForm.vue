@@ -17,6 +17,7 @@
                            <select name="tipo" class="form-select" v-model="form.tipo" required>
                             <option value="Asignacion">Asignacion</option>
                             <option value="Desincorporacion">Desincorporacion</option>
+                            <option value="Solicitud">Solicitud</option>
                            </select>
                             
                             

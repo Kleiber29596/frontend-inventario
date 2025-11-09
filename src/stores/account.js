@@ -1169,8 +1169,13 @@ export const useAccountStore = defineStore('account', {
 // Configura los interceptores de Axios para verificar el token automáticamente
 axios.interceptors.request.use(
     (config) => {
-        if (user.token) {
-            config.headers.Authorization = `Bearer ${user.token}`;
+        // Lee el sessionStorage en cada petición para obtener el token más reciente.
+        const userString = sessionStorage.getItem("user");
+        if (userString) {
+            const userData = JSON.parse(userString);
+            if (userData && userData.token) {
+                config.headers.Authorization = `Bearer ${userData.token}`;
+            }
         }
         return config;
     },
