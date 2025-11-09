@@ -9,6 +9,7 @@ import BienesView from '@/views/BienesView.vue'
 import PrestamosView from '@/views/PrestamosView.vue'
 import AsignacionView from '@/views/AsignacionView.vue'
 import DesincorporacionView from '@/views/DesincorporacionView.vue'
+import AsignacionFormView from '@/views/AsignacionFormView.vue'
 import SolicitudesView from '@/views/SolicitudesView.vue'
 
 const router = createRouter({
@@ -142,6 +143,14 @@ const router = createRouter({
       path: '/asignaciones',
       name: 'asignaciones',
       component: AsignacionView,
+      meta: {
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/asignaciones/crear',
+      name: 'asignacion-crear',
+      component: AsignacionFormView,
       meta: {
         requiredAuth: true
       }

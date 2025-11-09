@@ -93,6 +93,17 @@ export const useSolicitudStore = defineStore('solicitud', {
       }
     },
 
+    async fetchSolicitudById(id) {
+      try {
+        const response = await axios.get(`${BASE_URL}solicitudes-bienes/solicitudes/${id}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error al obtener la solicitud ${id}:`, error);
+        useToast().showToast('Error al obtener los detalles de la solicitud', 'error');
+        throw error;
+      }
+    },
+
     async aprobarSolicitud(id) {
       this.loading = true;
       try {

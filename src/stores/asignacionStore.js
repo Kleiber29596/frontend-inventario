@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 import { useToast } from '@/stores/useToast';
+import { useSolicitudStore } from '@/stores/solicitudStore';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -66,9 +67,17 @@ export const useAsignacionStore = defineStore('asignacion', {
     async createAsignacion(asignacion) {
       this.loading = true;
       try {
-        await axios.post(`${BASE_URL}asignaciones/crear`, asignacion);
+        const response = await axios.post(`${BASE_URL}asignaciones/crear`, asignacion);
+        
+        // Lógica para aprobar la solicitud original si la asignación se creó desde una.
+        if (asignacion.solicitud_id && response.status >= 200 && response.status < 300) {
+          const solicitudStore = useSolicitudStore();
+          await solicitudStore.aprobarSolicitud(asignacion.solicitud_id);
+        }
+
         await this.fetchAsignaciones(); // Refresh list
         useToast().showToast('Asignación creada exitosamente');
+        return response; // Devolver la respuesta para poder redirigir
       } catch (error) {
         console.error("Error al crear la asignación:", error);
         throw error;

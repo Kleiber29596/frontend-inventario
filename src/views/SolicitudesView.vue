@@ -31,7 +31,7 @@
                                     <td colspan="6" class="text-center">Cargando...</td>
                                 </tr>
                                 <tr v-for="solicitud in store.solicitudes" :key="solicitud.id">
-                                    <td>{{ solicitud.solicitante.nombre_apellido }}</td>
+                                    <td>{{ `${solicitud.solicitante.persona.primer_nombre} ${solicitud.solicitante.persona.primer_apellido}` }}</td>
                                     <td>{{ solicitud.departamento_solicitante?.nombre || 'N/A' }}</td>
                                     <td>{{ solicitud.motivo_solicitud?.descripcion || 'N/A' }}</td>
                                     <td>{{ solicitud.fecha_solicitud }}</td>
@@ -41,14 +41,21 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-action btn-success" @click="aprobarSolicitud(solicitud.id)" title="Aprobar" :disabled="solicitud.estatus?.descripcion === 'Aprobada'">
+                                        <!-- Este botón ahora inicia el flujo para crear una asignación -->
+                                        <button class="btn btn-action btn-success" 
+                                                @click="iniciarAsignacion(solicitud.id)" 
+                                                title="Atender Solicitud / Crear Asignación" 
+                                                :disabled="solicitud.estatus?.descripcion !== 'Pendiente'">
                                             <IconCheck size="20" stroke-width="1.5" />
                                         </button>
-                                        <button class="btn btn-action" @click="openModal(solicitud)" title="Editar">
+                                        <button class="btn btn-action" @click="openModal(solicitud)" title="Editar" :disabled="solicitud.estatus?.descripcion !== 'Pendiente'">
                                             <IconEdit size="20" stroke-width="1.5" />
                                         </button>
-                                        <button class="btn btn-action text-danger" @click="deleteSolicitud(solicitud.id)" title="Eliminar">
-                                            <IconTrash size="20" stroke-width="1.5" />
+                                        <!-- Botón para Rechazar la solicitud -->
+                                        <button class="btn btn-action text-danger" 
+                                                @click="rechazarSolicitud(solicitud.id)" title="Rechazar" 
+                                                :disabled="solicitud.estatus?.descripcion !== 'Pendiente'">
+                                            <IconX size="20" stroke-width="1.5" />
                                         </button>
                                     </td>
                                 </tr>
@@ -74,12 +81,14 @@
 import { ref, onMounted, watch } from 'vue';
 import { useSolicitudStore } from '@/stores/solicitudStore';
 import HeaderPage from '@/components/page/header/Component.vue';
+import { useRouter } from 'vue-router';
 import FooterPage from '@/components/page/footer/Component.vue';
 import SolicitudForm from '@/components/forms/SolicitudForm.vue';
-import { IconEdit, IconTrash, IconCheck} from '@tabler/icons-vue';
+import { IconEdit, IconCheck, IconX } from '@tabler/icons-vue';
 import Pagination from '@/components/paginacion/paginacion.vue';
 import SearchInput from '@/components/paginacion/searchInput.vue';
 
+const router = useRouter();
 const store = useSolicitudStore();
 const selectedSolicitud = ref(null);
 const showSolicitudModal = ref(false);
@@ -106,21 +115,23 @@ const closeModal = () => {
     fetchData();
 };
 
-const deleteSolicitud = async (id) => {
-    if (confirm('¿Está seguro de que desea eliminar esta solicitud?')) {
-        await store.deleteSolicitud(id);
-    }
+const iniciarAsignacion = (solicitudId) => {
+    // Redirige al formulario de creación de asignación, pasando el ID de la solicitud
+    router.push({ path: '/asignaciones/crear', query: { solicitud_id: solicitudId } });
 };
 
-const aprobarSolicitud = async (id) => {
-    if (confirm('¿Está seguro de que desea aprobar esta solicitud?')) {
-        await store.aprobarSolicitud(id);
+const rechazarSolicitud = async (id) => {
+    // Aquí podrías usar un modal más elegante como SweetAlert2 para confirmar
+    if (confirm('¿Está seguro de que desea rechazar esta solicitud? Esta acción no se puede deshacer.')) {
+        await store.rechazarSolicitud(id);
+        fetchData(); // Refrescar la lista
     }
 };
 
 const getEstatusClass = (estatus) => {
     if (estatus === 'Aprobada') return 'bg-success';
     if (estatus === 'Rechazada') return 'bg-danger';
+    if (estatus === 'Pendiente') return 'bg-warning';
     return 'bg-secondary';
 };
 </script>
