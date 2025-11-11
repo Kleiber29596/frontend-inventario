@@ -67,9 +67,12 @@ export const useAsignacionStore = defineStore('asignacion', {
     async createAsignacion(asignacion) {
       this.loading = true;
       try {
+        const estatus = this.catalogs.estatus.find(e => e.descripcion === 'Activa' && e.tipo_estatus === 'Asignacion');
+        if (estatus) asignacion.estatus_id = estatus.id;
         const response = await axios.post(`${BASE_URL}asignaciones/crear`, asignacion);
         
         // Lógica para aprobar la solicitud original si la asignación se creó desde una.
+        
         if (asignacion.solicitud_id && response.status >= 200 && response.status < 300) {
           const solicitudStore = useSolicitudStore();
           await solicitudStore.aprobarSolicitud(asignacion.solicitud_id);

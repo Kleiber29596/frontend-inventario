@@ -59,7 +59,15 @@ export const useSolicitudStore = defineStore('solicitud', {
 
     async createSolicitud(solicitud) {
       try {
-        await axios.post(`${BASE_URL}solicitudes-bienes/crear`, solicitud);
+        // Buscamos el ID del estatus "Pendiente" en los catálogos ya cargados.
+        const estatusPendiente = this.catalogs.estatus.find(e => e.descripcion === 'Pendiente' && e.tipo_estatus === 'Solicitud');
+
+        // Creamos una copia del objeto de solicitud para no mutar el original.
+        const payload = { ...solicitud };
+
+        // Si encontramos el estatus "Pendiente", lo asignamos por defecto.
+        if (estatusPendiente) payload.estatus_id = estatusPendiente.id;
+        await axios.post(`${BASE_URL}solicitudes-bienes/crear`, payload);
         useToast().showToast('Solicitud creada exitosamente');
         await this.fetchSolicitudes();
       } catch (error) {

@@ -9,16 +9,20 @@
                 <div class="modal-body">
                     <form @submit.prevent="handleSubmit">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Departamento Solicitante</label>
                                 <CustomVueSelect v-model="form.departamento_solicitante_id"
                                     :options="store.catalogs.departamentos"
                                     placeholder="Selecciona un departamento..." label="nombre" track-by="id" />
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Motivo</label>
                                 <CustomVueSelect v-model="form.motivo_solicitud_id" :options="store.catalogs.motivos"
                                     placeholder="Selecciona un motivo..." label="descripcion" track-by="id" />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Tiempo Requerido</label>
+                                <input type="date" class="form-control" v-model="form.tiempo_requerido">
                             </div>
                         </div>
                         <div class="mb-3">
@@ -26,17 +30,7 @@
                             <textarea v-model="form.descripcion" class="form-control" rows="3"
                                 placeholder="Describe la solicitud..."></textarea>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Tiempo Requerido</label>
-                                <input type="date" class="form-control" v-model="form.tiempo_requerido">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Estatus</label>
-                                <CustomVueSelect v-model="form.estatus_id" :options="store.catalogs.estatus"
-                                    placeholder="Selecciona un estatus..." label="descripcion" track-by="id" />
-                            </div>
-                        </div>
+                        
                     </form>
                 </div>
                 <div class="modal-footer">

@@ -109,7 +109,7 @@ export const useBienesStore = defineStore('bienes', {
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/modelos/select`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estados_fisicos/select`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/colores/select`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo=bienes`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo=Bienes`),
 
         ]);
 
