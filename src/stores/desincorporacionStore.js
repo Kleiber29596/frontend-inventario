@@ -79,7 +79,7 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
           axios.get(`${BASE_URL}auxiliares/dependencias/select`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo=Desincorporacion`),
           axios.get(`${BASE_URL}bienes/para-select`), // Fetch all bienes
-          axios.get(`${BASE_URL}auxiliares/motivos/select?tipo=Desincorporación`),
+          axios.get(`${BASE_URL}auxiliares/motivos/select?tipo=Desincorporacion`),
           
         ]);
         this.catalogs.personas      = personasRes.data;
