@@ -42,7 +42,7 @@ export const useSolicitudStore = defineStore('solicitud', {
       try {
         const [deptosRes, motivosRes, estatusRes] = await Promise.all([
           axios.get(`${BASE_URL}auxiliares/dependencias/select`),
-          axios.get(`${BASE_URL}auxiliares/motivos/select?tipo=Solicitud`),
+          axios.get(`${BASE_URL}auxiliares/motivos/select?tipo=`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo=Solicitud`),
         ]);
 

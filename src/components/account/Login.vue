@@ -16,7 +16,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">
-                                Correo electrónico:
+                                Usuario:
                                 <span class="form-label-description">
                                     <a href="#" data-bs-toggle="modal" data-bs-target="#modal-simple">Olvido de
                                         correo</a>
@@ -92,10 +92,7 @@ const useAccount = useAccountStore();
 const validate = Yup.object().shape({
     email: Yup.string()
         .required('El correo es obligatorio'),
-    password: Yup.string()
-        .required('La contraseña es obligatoria')
-        .min(3, 'La contraseña debe tener al menos 3 dígitos')
-        .max(8, 'La contraseña no puede tener más de 8 dígitos'),
+ 
 });
 
 const email = ref('')

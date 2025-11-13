@@ -7,6 +7,7 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 export const useBienesStore = defineStore('bienes', {
   state: () => ({
     bienes: [],
+    bienesAsignados: [], // Para el formulario de desincorporación
     loading: false,
     searchTerm: '',
     totalItems: 0,
@@ -46,6 +47,24 @@ export const useBienesStore = defineStore('bienes', {
       }
     },
 
+    async fetchBienesAsignadosPorDepartamento(departamentoId) {
+      if (!departamentoId) {
+        this.bienesAsignados = [];
+        return;
+      }
+      this.loading = true;
+      try {
+        const response = await axios.get(`${BASE_URL}bienes/bienes/asignados-por-departamento/${departamentoId}`);
+        this.bienesAsignados = response.data || [];
+      } catch (error) {
+        console.error("Error al obtener bienes asignados:", error);
+        this.bienesAsignados = [];
+        useToast().showToast('Error al cargar los bienes del departamento', 'error');
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async createBien(bien) {
       this.loading = true;
       try {
@@ -54,8 +73,8 @@ export const useBienesStore = defineStore('bienes', {
         useToast().showToast('Bien creado exitosamente');
       } catch (error) {
         console.error("Error al crear el bien:", error);
-        throw error;
         useToast().showToast('Error al crear el bien', 'error');
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -69,10 +88,20 @@ export const useBienesStore = defineStore('bienes', {
         useToast().showToast('Bien actualizado exitosamente');
       } catch (error) {
         console.error("Error al actualizar el bien:", error);
-        throw error;
         useToast().showToast('Error al actualizar el bien', 'error');
+        throw error;
       } finally {
         this.loading = false;
+      }
+    },
+
+    async fetchBienById(id) {
+      try {
+        const response = await axios.get(`${BASE_URL}bienes/bienes/${id}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error al obtener el bien ${id}:`, error);
+        throw error;
       }
     },
 
@@ -91,6 +120,7 @@ export const useBienesStore = defineStore('bienes', {
       return bienData;
     },
 
+   
     async catalogos_bienes() {
       this.loading = true;
       try {
@@ -131,5 +161,6 @@ export const useBienesStore = defineStore('bienes', {
         this.loading = false;
       }
     },
+
   },
 });

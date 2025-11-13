@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Login from '../views/account/Login.vue'
 import HomeView from '../views/HomeView.vue'
 import CustomersView from '../views/CustomersView.vue'
 import ProfileView from '../views/ProfileView.vue'
-import { useAccountStore } from '../stores/account'; // Asegúrate de importar el store correctamente
+import { useAccountStore } from '../stores/account';
+import { useToast } from '@/stores/useToast';
 import RoleView from '@/views/RoleView.vue'
 import BienesView from '@/views/BienesView.vue'
-import PrestamosView from '@/views/PrestamosView.vue'
+import PrestamosView from '@/views/PrestamosView.vue' // No usado, se puede eliminar
 import AsignacionView from '@/views/AsignacionView.vue'
 import DesincorporacionView from '@/views/DesincorporacionView.vue'
 import AsignacionFormView from '@/views/AsignacionFormView.vue'
@@ -18,9 +18,9 @@ const router = createRouter({
     // { path: '/:pathMatch(.*)*', redirect: '/no-encontrada' },
     // { path: "/no-encontrada", component: NoEncontrada, beforeEnter: (to, from, next) => { if (token) { next() } else { next('/'); } }, },
     {
-      path: '/',
-      name: 'login',
-      component: Login,
+      path: '/', // La ruta de login ahora apunta al nuevo componente
+      name: 'login', // El nombre de la ruta de login
+      component: () => import('../views/account/Login.vue'),
       meta: {
         requiredAuth: false
       }
@@ -37,7 +37,8 @@ const router = createRouter({
       path: '/customers',
       name: 'customers',
       component: CustomersView,
-      meta: {
+      meta: { // Ruta de ejemplo, protegida para admin
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -45,8 +46,9 @@ const router = createRouter({
       path: '/categorias',
       name: 'categorias',
       component: CustomersView,
-      meta: {
-        requiredAuth: true
+      meta: { // Ruta de ejemplo, protegida para admin
+        requiresAdmin: true,
+        requiredAuth: true,
       }
     },
     {
@@ -61,89 +63,99 @@ const router = createRouter({
       path: '/cajas',
       name: 'cajas',
       component: CustomersView,
-      meta: {
-        requiredAuth: true
+      meta: { // Ruta de ejemplo, protegida para admin
+        requiresAdmin: true,
+        requiredAuth: true,
       }
     },
     {
       path: '/correos',
       name: 'correos',
-      component: CustomersView
+      component: CustomersView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
       path: '/archivos',
       name: 'archivos',
-      component: CustomersView
+      component: CustomersView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
       path: '/mensajes',
       name: 'mensajes',
-      component: CustomersView
+      component: CustomersView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
       path: '/facebook',
       name: 'facebook',
-      component: CustomersView
-    },
-    {
-      path: '/correos',
-      name: 'correos',
-      component: CustomersView
+      component: CustomersView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
       path: '/a',
       name: 'a',
-      component: CustomersView
+      component: CustomersView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
       path: '/b',
       name: 'b',
-      component: CustomersView
+      component: CustomersView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
       path: '/c',
       name: 'c',
-      component: CustomersView
+      component: CustomersView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
       path: '/d',
       name: 'd',
-      component: CustomersView
+      component: CustomersView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
       path: '/role',
       name: 'role',
-      component: RoleView
+      component: RoleView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
       path: '/f',
       name: 'f',
-      component: CustomersView
+      component: CustomersView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
-      path: '/Bienes',
-      name: 'Bienes',
-      component: BienesView
+      path: '/bienes', // Corregido a minúsculas para consistencia
+      name: 'bienes',
+      component: BienesView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
 
 
     {
       path: '/solicitudes',
       name: 'solicitudes',
-      component: SolicitudesView
+      component: SolicitudesView,
+      meta: { requiredAuth: true } // Accesible para ambos roles
      
     },
     
     {
-      path: '/Prestamos',
-      name: 'Prestámos',
-      component: PrestamosView
+      path: '/prestamos', // Corregido a minúsculas
+      name: 'prestamos',
+      component: PrestamosView,
+      meta: { requiresAdmin: true, requiredAuth: true }
     },
     {
       path: '/asignaciones',
       name: 'asignaciones',
       component: AsignacionView,
       meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -152,6 +164,7 @@ const router = createRouter({
       name: 'asignacion-crear',
       component: AsignacionFormView,
       meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -160,6 +173,16 @@ const router = createRouter({
       name: 'desincorporaciones',
       component: DesincorporacionView,
       meta: {
+        requiresAdmin: true,
+        requiredAuth: true
+      }
+    },
+    {
+      path: '/desincorporaciones/crear',
+      name: 'desincorporacion-crear',
+      component: () => import('@/views/DesincorporacionPageForm.vue'),
+      meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -169,6 +192,7 @@ const router = createRouter({
       name: 'configuracion-categorias',
       component: () => import('@/views/CategoriaView.vue'),
       meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -177,6 +201,7 @@ const router = createRouter({
       name: 'configuracion-modelos',
       component: () => import('@/views/ModeloView.vue'),
       meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -184,7 +209,7 @@ const router = createRouter({
       path: '/configuracion/motivos',
       name: 'configuracion-motivos',
       component: () => import('@/views/MotivoView.vue'),
-      meta: {
+      meta: { // Accesible para ambos roles
         requiredAuth: true
       }
     },
@@ -193,6 +218,7 @@ const router = createRouter({
       name: 'configuracion-dependencias',
       component: () => import('@/views/DependenciaView.vue'),
       meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -201,6 +227,7 @@ const router = createRouter({
       name: 'configuracion-colores',
       component: () => import('@/views/ColorView.vue'),
       meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -209,6 +236,7 @@ const router = createRouter({
       name: 'configuracion-tipos-bien',
       component: () => import('@/views/TipoBienView.vue'),
       meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -217,6 +245,7 @@ const router = createRouter({
       name: 'configuracion-estados-fisicos',
       component: () => import('@/views/EstadoFisicoView.vue'),
       meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -225,6 +254,7 @@ const router = createRouter({
       name: 'configuracion-estatus',
       component: () => import('@/views/EstatusView.vue'),
       meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -233,6 +263,7 @@ const router = createRouter({
       name: 'configuracion-personas',
       component: () => import('@/views/PersonaView.vue'),
       meta: {
+        requiresAdmin: true,
         requiredAuth: true
       }
     },
@@ -244,24 +275,27 @@ const router = createRouter({
 // Ruta guard
 router.beforeEach(async (to, from, next) => {
   const accountStore = useAccountStore(); // Usamos el store de cuenta
-
-  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
-
-  // if (user.token && accountStore.isAuthenticated) {
-  //   // Verifica el token si el usuario no está autenticado
-  //   const isValid = await accountStore.verifyToken();
-
-  //   if (!isValid) {
-  //     return next('/'); // Redirige al login si el token no es válido
-  //   }
-  // }
+  const { showToast } = useToast();
+  const authRequired = to.meta.requiredAuth;
 
   if (accountStore.isAuthenticated && to.name === 'login') {
     return next('/home'); // Evita que los usuarios autenticados accedan al login
   }
 
-  if (to.meta.requiredAuth && !accountStore.isAuthenticated) {
-    return next('/'); // Redirige al login si no está autenticado
+  if (authRequired && !accountStore.isAuthenticated) {
+    // Intenta verificar el token si no está en el estado pero podría estar en sessionStorage
+    const isValid = await accountStore.verifyToken();
+    if (!isValid) {
+      return next('/'); // Si el token no es válido, redirige al login
+    }
+  }
+
+  // Después de verificar la autenticación, verificamos los permisos de administrador
+  if (to.meta.requiresAdmin && !accountStore.isAdmin) {
+    // Si la ruta requiere ser admin y el usuario no lo es, redirige
+    // a una página segura, como la de solicitudes.
+    showToast('No tiene permisos suficientes', 'warning');
+    return next('/solicitudes');
   }
 
   next(); // Si no hay problemas, permite el acceso a la ruta

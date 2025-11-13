@@ -36,6 +36,12 @@
                             <label for="fecha_inicio" class="form-label">Fecha de Inicio</label>
                             <input type="date" class="form-control" id="fecha_inicio" v-model="form.fecha_inicio">
                         </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_inicio" class="form-label">Fecha fin</label>
+                            <input type="date" class="form-control" id="fecha_fin" v-model="form.fecha_fin">
+                        </div>
+
                         <div class="col-md mb-3">
                             <label for="motivo" class="form-label">Motivo</label>
                             <CustomVueSelect :options="store.catalogs.motivos" v-model="form.motivo"
@@ -63,7 +69,7 @@
                         <p><strong>Departamento:</strong> {{ getDepartamentoNombre }}</p>
                         <p><strong>Responsable:</strong> {{ getPersonaNombre }}</p>
                         <p><strong>Fecha de Inicio:</strong> {{ form.fecha_inicio }}</p>
-                        <p><strong>Fecha de fin:</strong> Indeterminada</p>
+                        <p><strong>Fecha de fin:</strong> {{ form.fecha_fin }}</p>
                         <p><strong>Motivo:</strong> {{ getMotivoNombre }}</p>
                         <hr>
                         <h5>Bienes Seleccionados ({{ form.bienes_id.length }})</h5>
@@ -167,7 +173,7 @@ onMounted(async () => {
                 form.value.departamento_id = solicitud.departamento_solicitante;
                 form.value.motivo = solicitud.motivo_solicitud;
                 // El solicitante de la solicitud es la persona que recibe la asignación
-                form.value.persona_id = solicitud.solicitante.persona;
+                form.value.persona_id = solicitud.solicitante;
             }
         } catch (error) {
             console.error("No se pudo pre-cargar el formulario desde la solicitud:", error);
@@ -236,7 +242,7 @@ const handleSubmit = async () => {
 
     const payload = {
         departamento_id: formValue.departamento_id?.id || formValue.departamento_id,
-        persona_id: formValue.persona_id?.id || formValue.persona_id,
+        persona_id: formValue.persona_id?.persona_id || formValue.persona_id?.id,
         estatus_id: formValue.estatus_id?.id || formValue.estatus_id,
         fecha_inicio: formValue.fecha_inicio,
         fecha_fin: formValue.fecha_fin,

@@ -5,10 +5,12 @@
     <div class="page-body mt-3 mb-3">
       <div class="container-xl">
         <div class="card">
-          <div class="toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true" ref="toastSuccess">
+          <div class="toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3"
+            role="alert" aria-live="assertive" aria-atomic="true" ref="toastSuccess">
             <div class="d-flex">
               <div class="toast-body">{{ toastMessage }}</div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                aria-label="Close"></button>
             </div>
           </div>
 
@@ -43,9 +45,12 @@
                   <td>{{ bien.tipo_bien.descripcion }}</td>
                   <td>{{ bien.marca.descripcion }}</td>
                   <td>{{ bien.modelo.descripcion }}</td>
-                  <td>{{ bien.estado_fisico.nombre}}</td>
-                  <td>{{ bien.fecha_adquisicion}}</td>
-                  <td><span class="badge bg-success">{{bien.estatus.descripcion}}</span></td>
+                  <td>{{ bien.estado_fisico.nombre }}</td>
+                  <td>{{ bien.fecha_adquisicion }}</td>
+                  <td> <span class="badge" :class="getEstatusClass(bien.estatus?.descripcion)">
+                      {{ bien.estatus?.descripcion || 'N/A' }}
+                    </span>
+                  </td>
                   <td>
                     <a class="btn btn-action" @click.prevent="openForm(true, bien)" title="Editar">
                       <IconEdit size="20" stroke-width="1.5" />
@@ -53,23 +58,18 @@
                   </td>
                 </tr>
                 <tr v-if="!store.loading && store.bienes.length === 0">
-                    <td colspan="9" class="text-center">No se encontraron bienes.</td>
+                  <td colspan="9" class="text-center">No se encontraron bienes.</td>
                 </tr>
               </tbody>
             </table>
           </div>
-            <div class="card-footer">
-                <Pagination v-model:page="currentPage" v-model:pageSize="pageSize" :total="store.totalItems" />
-            </div>
+          <div class="card-footer">
+            <Pagination v-model:page="currentPage" v-model:pageSize="pageSize" :total="store.totalItems" />
+          </div>
         </div>
 
-        <BienesForm
-          :showForm="showForm"
-          :isEdit="isEdit"
-          :bienData="bienData"
-          @close="closeForm"
-          @submit="handleSubmit"
-        />
+        <BienesForm :showForm="showForm" :isEdit="isEdit" :bienData="bienData" @close="closeForm"
+          @submit="handleSubmit" />
       </div>
     </div>
 
@@ -115,7 +115,7 @@ onMounted(() => {
 
 // --- Watchers for Pagination and Search ---
 watch([currentPage, pageSize, searchTerm], () => {
-    fetchData();
+  fetchData();
 });
 
 const openForm = async (edit = false, data = null) => {
@@ -149,5 +149,18 @@ const handleSubmit = () => {
   const toast = new Toast(toastSuccess.value);
   toast.show();
   fetchData(); // Refetch data on submit
+};
+
+const getEstatusClass = (estatus) => {
+  switch (estatus) {
+    case 'Disponible':
+      return 'bg-success';
+    case 'Asignado':
+      return 'bg-primary';
+    case 'Desincorporado':
+      return 'bg-danger';
+    default:
+      return 'bg-secondary';
+  }
 };
 </script>

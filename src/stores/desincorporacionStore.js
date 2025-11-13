@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 import { useToast } from '@/stores/useToast';
+import { useSolicitudStore } from '@/stores/solicitudStore';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export const useDesincorporacionStore = defineStore('desincorporacion', {
   state: () => ({
     desincorporaciones: [],
+    solicitud: null, // Contendrá los datos de la solicitud original
     searchTerm: '',
     totalItems: 0,
     totalPages: 1,
@@ -18,7 +20,8 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
       departamentos: [],
       estatus: [],
       bienes: [],
-      motivos : [],
+      motivos: [],
+      estadosFisicos: [], // Para la "Condición Final" de los bienes
     },
   }),
   actions: {
@@ -43,30 +46,58 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
         this.loading = false;
       }
     },
-    async createDesincorporacion(desincorporacion) {
+
+    async fetchSolicitudParaDesincorporar(solicitudId) {
+      if (!solicitudId) {
+        this.solicitud = null;
+        return;
+      }
       this.loading = true;
+      const solicitudStore = useSolicitudStore();
       try {
-        await axios.post(`${BASE_URL}desincorporaciones/crear`, desincorporacion);
-        await this.fetchDesincorporaciones(); // Refresh list
-        useToast().showToast('Desincorporación creada exitosamente');
+        const data = await solicitudStore.fetchSolicitudById(solicitudId);
+        this.solicitud = data;
+        await this.fetchCatalogosParaFormulario();
       } catch (error) {
-        console.error("Error al crear la desincorporación:", error);
-        throw error;
-        useToast().showToast('Error al crear la desincorporación', 'error');
+        console.error("Error al obtener la solicitud para desincorporar:", error);
+        this.solicitud = null;
+        useToast().showToast('Error al cargar los datos de la solicitud', 'error');
       } finally {
         this.loading = false;
       }
     },
+
+    async createDesincorporacion(payload) {
+      this.loading = true;
+      try {
+        const response = await axios.post(`${BASE_URL}desincorporaciones/crear`, payload);
+
+        if (payload.solicitud_id && response.status >= 200 && response.status < 300) {
+          const solicitudStore = useSolicitudStore();
+          await solicitudStore.aprobarSolicitud(payload.solicitud_id);
+        }
+
+        useToast().showToast('Desincorporación registrada exitosamente');
+        return response;
+      } catch (error) {
+        console.error("Error al crear la desincorporación:", error);
+        useToast().showToast(error.response?.data?.detail || 'Error al registrar la desincorporación', 'error');
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async updateDesincorporacion(id, desincorporacion) {
       this.loading = true;
       try {
         await axios.put(`${BASE_URL}desincorporaciones/actualizar/${id}`, desincorporacion);
-        await this.fetchDesincorporaciones(); // Refresh list
+        await this.fetchDesincorporaciones();
         useToast().showToast('Desincorporación actualizada exitosamente');
       } catch (error) {
         console.error("Error al actualizar la desincorporación:", error);
-        throw error;
         useToast().showToast('Error al actualizar la desincorporación', 'error');
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -80,19 +111,28 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo=Desincorporacion`),
           axios.get(`${BASE_URL}bienes/para-select`), // Fetch all bienes
           axios.get(`${BASE_URL}auxiliares/motivos/select?tipo=Desincorporacion`),
-          
         ]);
-        this.catalogs.personas      = personasRes.data;
+        this.catalogs.personas = personasRes.data;
         this.catalogs.departamentos = departamentosRes.data;
-        this.catalogs.estatus       = estatusRes.data;
-        this.catalogs.bienes        = bienesRes.data;
-        this.catalogs.motivos       = motivosRes.data;
+        this.catalogs.estatus = estatusRes.data;
+        this.catalogs.bienes = bienesRes.data;
+        this.catalogs.motivos = motivosRes.data;
       } catch (error) {
         console.error("Error al obtener catálogos:", error);
       } finally {
         this.loading = false;
       }
     },
+
+    async fetchCatalogosParaFormulario() {
+      try {
+        const estadosFisicosRes = await axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estados_fisicos/select`);
+        this.catalogs.estadosFisicos = Array.isArray(estadosFisicosRes.data) ? estadosFisicosRes.data : [];
+      } catch (error) {
+        console.error("Error al obtener catálogos para desincorporación:", error);
+      }
+    },
+
     async cargarActa(id, file) {
       this.loading = true;
       try {

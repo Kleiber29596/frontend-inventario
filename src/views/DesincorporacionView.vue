@@ -20,9 +20,8 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Motivo</th>
-                                        <th>Fecha de Inicio</th>
                                         <th>Persona Responsable</th>
-                                        <th>Estatus</th>
+                                        <th>Fecha</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -33,10 +32,8 @@
                                     <tr v-for="desincorporacion in store.desincorporaciones" :key="desincorporacion.id">
                                         <td>{{ desincorporacion.id }}</td>
                                         <td>{{ desincorporacion.motivo.descripcion}} </td>
-                                        <td>{{ desincorporacion.fecha_inicio }}</td>
                                         <td>{{ desincorporacion.persona_responsable.primer_nombre + ' ' + desincorporacion.persona_responsable.primer_apellido}}</td>
-                                        <td><span class="badge bg-danger">{{ desincorporacion.estatus.descripcion}}</span></td>
-                                        
+                                        <td>{{ desincorporacion.fecha_desincorporacion }}</td>
                                             <!-- <button class="btn btn-sm btn-warning" @click="openModal(desincorporacion)">Editar</button> -->
                                         <td>
                                             <a class="btn btn-action" @click="openModal(desincorporacion)">

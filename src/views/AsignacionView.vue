@@ -35,7 +35,10 @@
                                         <td>{{ asignacion.persona.primer_nombre }}</td>
                                         <td>{{ asignacion.departamento.nombre }}</td>
                                         <td>{{ asignacion.fecha_inicio }}</td>
-                                        <td><span class="badge bg-success">{{ asignacion.estatus.descripcion }}</span></td>
+                                        <td> <span class="badge" :class="getEstatusClass(asignacion.estatus?.descripcion)">
+                                            {{ asignacion.estatus?.descripcion || 'N/A' }}
+                                        </span>
+                                        </td>
                                         <td>
                                             <a class="btn btn-action" @click="openModal(asignacion)">
                                             <IconEdit size="24" stroke-width="1.5" />
@@ -141,14 +144,11 @@ const closeDevolucionModal = () => {
     store.fetchAsignaciones(); // Recargar lista al cerrar
 };
 
-const search = () => {
-    store.fetchAsignaciones(1, store.searchTerm);
-};
 
-const changePage = (page) => {
-    if (page > 0 && page <= store.paginacion.paginas) {
-        store.fetchAsignaciones(page, store.searchTerm);
-    }
+const getEstatusClass = (estatus) => {
+    if (estatus === 'Activa') return 'bg-primary';
+    if (estatus === 'Finalizada') return 'bg-success';
+    return 'bg-secondary';
 };
 
 </script>

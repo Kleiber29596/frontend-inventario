@@ -1,7 +1,8 @@
 
 <template>
     <main class="page-wrapper">
-        <HeaderPage :icon="['fas', 'file-alt']" text="Solicitudes de Bienes" />
+        <!-- Se muestra el nombre de usuario desde el accountStore -->
+        <HeaderPage :icon="['fas', 'file-alt']" text="Solicitudes de Bienes" :user-name="accountStore.username" />
 
         <div class="page-body mt-3 mb-3">
             <div class="container-xl">
@@ -21,6 +22,7 @@
                                     <th>Solicitante</th>
                                     <th>Departamento</th>
                                     <th>Motivo</th>
+                                    <th>Tipo</th>
                                     <th>Fecha</th>
                                     <th>Estatus</th>
                                     <th>Acciones</th>
@@ -28,39 +30,39 @@
                             </thead>
                             <tbody>
                                 <tr v-if="store.loading">
-                                    <td colspan="6" class="text-center">Cargando...</td>
+                                    <td colspan="7" class="text-center">Cargando...</td>
                                 </tr>
                                 <tr v-for="solicitud in store.solicitudes" :key="solicitud.id">
                                     <td>{{ `${solicitud.solicitante.persona.primer_nombre} ${solicitud.solicitante.persona.primer_apellido}` }}</td>
                                     <td>{{ solicitud.departamento_solicitante?.nombre || 'N/A' }}</td>
                                     <td>{{ solicitud.motivo_solicitud?.descripcion || 'N/A' }}</td>
-                                    <td>{{ solicitud.fecha_solicitud }}</td>
+                                    <td>{{ solicitud.tipo }}</td>
+                                    <td>{{ new Date(solicitud.fecha_solicitud).toLocaleDateString('es-ES') }}</td>
                                     <td>
                                         <span class="badge" :class="getEstatusClass(solicitud.estatus?.descripcion)">
                                             {{ solicitud.estatus?.descripcion || 'N/A' }}
                                         </span>
                                     </td>
                                     <td>
-                                        <!-- Este botón ahora inicia el flujo para crear una asignación -->
-                                        <button class="btn btn-action btn-success" 
-                                                @click="iniciarAsignacion(solicitud.id)" 
+                                        <!-- Botones solo para Administradores -->
+                                        <template v-if="accountStore.isAdmin">
+                                            <button class="btn btn-action btn-success" 
+                                                @click="atenderSolicitud(solicitud)" 
                                                 title="Atender Solicitud / Crear Asignación" 
                                                 :disabled="solicitud.estatus?.descripcion !== 'Pendiente'">
-                                            <IconCheck size="20" stroke-width="1.5" />
-                                        </button>
-                                        <button class="btn btn-action" @click="openModal(solicitud)" title="Editar" :disabled="solicitud.estatus?.descripcion !== 'Pendiente'">
-                                            <IconEdit size="20" stroke-width="1.5" />
-                                        </button>
-                                        <!-- Botón para Rechazar la solicitud -->
-                                        <button class="btn btn-action text-danger" 
+                                                <IconCheck size="20" stroke-width="1.5" />
+                                            </button>
+                                            <button class="btn btn-action text-danger" 
                                                 @click="rechazarSolicitud(solicitud.id)" title="Rechazar" 
                                                 :disabled="solicitud.estatus?.descripcion !== 'Pendiente'">
-                                            <IconX size="20" stroke-width="1.5" />
-                                        </button>
+                                                <IconX size="20" stroke-width="1.5" />
+                                            </button>
+                                        </template>
+                                       
                                     </td>
                                 </tr>
                                 <tr v-if="!store.loading && store.solicitudes.length === 0">
-                                    <td colspan="6" class="text-center">No se encontraron solicitudes.</td>
+                                    <td colspan="7" class="text-center">No se encontraron solicitudes.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -80,6 +82,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useSolicitudStore } from '@/stores/solicitudStore';
+import { useAccountStore } from '@/stores/account';
 import HeaderPage from '@/components/page/header/Component.vue';
 import { useRouter } from 'vue-router';
 import FooterPage from '@/components/page/footer/Component.vue';
@@ -90,6 +93,7 @@ import SearchInput from '@/components/paginacion/searchInput.vue';
 
 const router = useRouter();
 const store = useSolicitudStore();
+const accountStore = useAccountStore();
 const selectedSolicitud = ref(null);
 const showSolicitudModal = ref(false);
 
@@ -115,9 +119,14 @@ const closeModal = () => {
     fetchData();
 };
 
-const iniciarAsignacion = (solicitudId) => {
-    // Redirige al formulario de creación de asignación, pasando el ID de la solicitud
-    router.push({ path: '/asignaciones/crear', query: { solicitud_id: solicitudId } });
+const atenderSolicitud = (solicitud) => {
+    if (solicitud.tipo === 'ASIGNACION') {
+        // Redirige al formulario de creación de asignación
+        router.push({ path: '/asignaciones/crear', query: { solicitud_id: solicitud.id } });
+    } else if (solicitud.tipo === 'DESINCORPORACION') {
+        // Redirige al formulario de creación de desincorporación
+        router.push({ path: '/desincorporaciones/crear', query: { solicitud_id: solicitud.id } });
+    }
 };
 
 const rechazarSolicitud = async (id) => {

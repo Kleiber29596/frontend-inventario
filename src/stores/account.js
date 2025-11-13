@@ -5,12 +5,11 @@ import { ref } from "vue";
 import Swal from "sweetalert2";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-
-const user = ref(JSON.parse(sessionStorage.getItem("user") || "{}"));
+const initialUser = JSON.parse(sessionStorage.getItem("user") || "null");
 
 export const useAccountStore = defineStore('account', {
     state: () => ({
-        isAuthenticated: !!user.value.token, // Indica si el usuario está autenticado
+        user: initialUser, // Contendrá la información del usuario (id, username, groups)
         loadingPage: false,
 
         alerts: [], // Lista de alertas activas
@@ -24,6 +23,19 @@ export const useAccountStore = defineStore('account', {
         gmail: null,
         listgmail: [],
     }),
+    getters: {
+        isAuthenticated: (state) => !!state.user?.token,
+        // Comprobación de roles insensible a mayúsculas/minúsculas para mayor robustez.
+        isAdmin: (state) => {
+            const groups = state.user?.groups?.map(g => g.toLowerCase()) || [];
+            return groups.includes('administrador');
+        },
+        isSolicitante: (state) => {
+            const groups = state.user?.groups?.map(g => g.toLowerCase()) || [];
+            return groups.includes('solicitante');
+        },
+        username: (state) => state.user?.username || 'Usuario',
+    },
     actions: {
         // Funciones para manejar las alertas
         async addAlert({ type, title, message, scope = 'global', duration = 5000 }) {
@@ -72,19 +84,22 @@ export const useAccountStore = defineStore('account', {
                     const token = response.data.access;
                     const decodedToken = jwt_decode(token);
 
-                    // Guardamos los datos en sessionStorage
+                    // Extraemos los nombres de los grupos del objeto de usuario
+                    const groupNames = response.data.user?.groups?.map(g => g.name) || [];
+
                     const userData = {
                         token,
-                        id: decodedToken.user_id,
-                        email: 'kleiber8113@gmail.com',
+                        id: response.data.user.id,
+                        username: response.data.user.username,
+                        groups: groupNames,
                     };
                     sessionStorage.setItem("user", JSON.stringify(userData));
+                    this.user = userData;
 
                     const simulateDelay = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
                     this.loadingPage = true;
                     await simulateDelay(5000);
 
-                    this.isAuthenticated = true;
                     return response;
                 }
                 return false;
@@ -129,40 +144,44 @@ export const useAccountStore = defineStore('account', {
         },
         async verifyToken() {
             try {
-                const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+                const userSession = JSON.parse(sessionStorage.getItem("user") || "null");
+                if (!userSession?.token) {
+                    this.logout();
+                    return false;
+                }
 
                 // const simulateDelay = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
                 const response = await axios.get(`${BASE_URL}api/v1/auth/account/validate-token`, {
-                    headers: { Authorization: `Bearer ${user.token}` },
+                    headers: { Authorization: `Bearer ${userSession.token}` },
                 });
                 // await simulateDelay(10000);
 
                 if (response.data.statusCode === 200) {
-                    this.isAuthenticated = true;
+                    this.user = userSession;
                     return true;
                 }
 
-                sessionStorage.clear();
-                this.isAuthenticated = false;
+                this.logout();
                 return false;
             } catch (error) {
-
-
                 if (error?.response?.data?.statusCode === 401) {
-                    sessionStorage.clear();
-                    this.isAuthenticated = false;
+                    this.logout();
                     return false;
                 }
 
-                sessionStorage.clear();
-                this.isAuthenticated = false;
+                this.logout();
                 return false;
             }
         },
-        async logout(router) {
+        logout(router) {
             sessionStorage.clear();
-            this.isAuthenticated = false;
-            router.push('/')
+            this.user = null;
+            if (router) {
+                router.push('/');
+            } else {
+                // Si no se pasa el router, recargamos para ir al login.
+                window.location.href = '/';
+            }
         },
         async verifyAccount(email, ci, birthdate) {
             try {
@@ -723,13 +742,8 @@ export const useAccountStore = defineStore('account', {
                 this.apiName = 'newPassword';
                 this.clearAlerts(); // Limpia cualquier alerta existente
 
-
                 const user = JSON.parse(sessionStorage.getItem("user") || "{}");
                 const headers = { Authorization: `Bearer ${user.token}` };
-
-
-
-                // Realizar la solicitud PUT con axios
                 const response = await axios.put(`${BASE_URL}api/v1/account/update/password`,
                     {
                         'currentPassword': currentPassword,
@@ -738,8 +752,6 @@ export const useAccountStore = defineStore('account', {
                     {
                         headers
                     });
-
-
 
                 if (response.data.statusCode === 200) {
                     this.addAlert({

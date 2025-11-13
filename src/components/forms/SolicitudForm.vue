@@ -1,5 +1,5 @@
 <template>
-    <div v-if="showModal" class="modal fade show d-block" tabindex="-1" aria-modal="true" role="dialog">
+    <div v-if="showModal" class="modal fade show d-block" tabindex="-1" aria-modal="true" role="dialog" @click.self="close">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -9,28 +9,44 @@
                 <div class="modal-body">
                     <form @submit.prevent="handleSubmit">
                         <div class="row">
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required">Tipo de Solicitud</label>
+                                <CustomVueSelect v-model="form.tipo"
+                                    :options="['ASIGNACION', 'DESINCORPORACION']"
+                                    placeholder="Selecciona el tipo..." />
+                            </div>
+                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Departamento Solicitante</label>
                                 <CustomVueSelect v-model="form.departamento_solicitante_id"
                                     :options="store.catalogs.departamentos"
                                     placeholder="Selecciona un departamento..." label="nombre" track-by="id" />
                             </div>
-                            <div class="col-md-4 mb-3">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Motivo</label>
                                 <CustomVueSelect v-model="form.motivo_solicitud_id" :options="store.catalogs.motivos"
                                     placeholder="Selecciona un motivo..." label="descripcion" track-by="id" />
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Tiempo Requerido</label>
                                 <input type="date" class="form-control" v-model="form.tiempo_requerido">
                             </div>
                         </div>
-                        <div class="mb-3">
+
+                        <!-- Campo para Solicitudes de ASIGNACIÓN -->
+                        <div class="mb-3" v-if="form.tipo === 'ASIGNACION'">
                             <label class="form-label">Descripción</label>
                             <textarea v-model="form.descripcion" class="form-control" rows="3"
                                 placeholder="Describe la solicitud..."></textarea>
                         </div>
-                        
+
+                        <!-- Campo para Solicitudes de DESINCORPORACIÓN -->
+                        <div class="mb-3" v-if="form.tipo === 'DESINCORPORACION'">
+                            <label class="form-label required">Bienes a Desincorporar</label>
+                            <CustomVueSelect v-model="form.bienes" :options="bienesStore.bienesAsignados"
+                                placeholder="Selecciona los bienes..." label="label" track-by="id" :multiple="true" />
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -50,6 +66,7 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue';
 import { useSolicitudStore } from '@/stores/solicitudStore';
+import { useBienesStore } from '@/stores/bienesStore';
 import CustomVueSelect from '@/components/select/select-vue.vue';
 
 const props = defineProps({
@@ -60,7 +77,9 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const store = useSolicitudStore();
+const bienesStore = useBienesStore();
 const isEdit = ref(false);
+
 
 const form = ref({
     id: null,
@@ -68,7 +87,9 @@ const form = ref({
     motivo_solicitud_id: null,
     descripcion: '',
     tiempo_requerido: new Date().toISOString().slice(0, 10),
-    estatus_id: 1, // Default to 1
+    estatus_id: null,
+    tipo: 'ASIGNACION', // Valor por defecto
+    bienes: [], // Para desincorporación
 });
 
 onMounted(() => {
@@ -77,8 +98,11 @@ onMounted(() => {
 
 watch(() => props.solicitud, (newVal) => {
     if (newVal) {
-        isEdit.value = true;
+        // La edición de solicitudes está deshabilitada, pero mantenemos la lógica por si se reactiva.
+        isEdit.value = true; 
         form.value = { ...newVal };
+        // Aseguramos que 'bienes' sea un array
+        form.value.bienes = newVal.detalles?.map(d => d.bien) || [];
     } else {
         isEdit.value = false;
         resetForm();
@@ -92,9 +116,21 @@ const resetForm = () => {
         motivo_solicitud_id: null,
         descripcion: '',
         tiempo_requerido: new Date().toISOString().slice(0, 10),
-        estatus_id: 1,
+        estatus_id: null,
+        tipo: 'ASIGNACION',
+        bienes: [],
     };
 };
+
+// Cuando cambia el tipo de solicitud o el departamento, cargamos los bienes correspondientes
+watch(() => [form.value.tipo, form.value.departamento_solicitante_id], ([newTipo, newDepto]) => {
+    if (newTipo === 'DESINCORPORACION' && newDepto?.id) {
+        bienesStore.fetchBienesAsignadosPorDepartamento(newDepto.id);
+    } else {
+        // Limpiamos la lista si no es para desincorporar
+        bienesStore.bienesAsignados = [];
+    }
+}, { deep: true });
 
 const handleSubmit = async () => {
     const payload = {
@@ -102,6 +138,8 @@ const handleSubmit = async () => {
         departamento_solicitante_id: form.value.departamento_solicitante_id?.id || form.value.departamento_solicitante_id,
         motivo_solicitud_id: form.value.motivo_solicitud_id?.id || form.value.motivo_solicitud_id,
         estatus_id: form.value.estatus_id?.id || form.value.estatus_id,
+        // Enviamos solo los IDs de los bienes
+        bienes: form.value.bienes.map(b => ({ bien_id: b.id, descripcion: b.label })),
     };
 
     if (isEdit.value) {
