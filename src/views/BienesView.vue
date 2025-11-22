@@ -1,6 +1,6 @@
 <template>
   <main class="page-wrapper">
-    <HeaderPage :icon="['fas', 'box']" text="Bienes" />
+    <HeaderPage :icon="['fas', 'box']" :text="headerText" />
 
     <div class="page-body mt-3 mb-3">
       <div class="container-xl">
@@ -15,7 +15,7 @@
           </div>
 
           <div class="card-header d-flex justify-content-between">
-            <p class="text-secondary m-0">Listado de Bienes</p>
+            <p class="text-secondary m-0">{{ listTitle }}</p>
             <div class="d-flex gap-2">
               <SearchInput v-model="searchTerm" />
               <a href="#" class="btn btn-primary ms-2" title="Agregar bien" @click.prevent="openForm()">Agregar</a>
@@ -27,6 +27,7 @@
               <thead>
                 <tr>
                   <th>Código</th>
+                  <th>N° Lote</th>
                   <th>Tipo</th>
                   <th>Marca</th>
                   <th>Modelo</th>
@@ -41,7 +42,8 @@
                   <td colspan="9" class="text-center">Cargando...</td>
                 </tr>
                 <tr v-for="bien in store.bienes" :key="bien.id">
-                  <td>{{ bien.serial_bien }}</td>
+                  <td><p class="text-muted">{{ bien.serial_bien? bien.serial_bien : 'Indefinido'}}</p> </td>
+                  <td>{{ bien.nro_lote }}</td>
                   <td>{{ bien.tipo_bien.descripcion }}</td>
                   <td>{{ bien.marca.descripcion }}</td>
                   <td>{{ bien.modelo.descripcion }}</td>
@@ -78,8 +80,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useBienesStore } from '@/stores/bienesStore';
+import { useAccountStore } from '@/stores/account.js';
 import FooterPage from '@/components/page/footer/Component.vue';
 import HeaderPage from '@/components/page/header/Component.vue';
 import { IconEdit } from '@tabler/icons-vue';
@@ -91,6 +94,7 @@ import { storeToRefs } from 'pinia';
 
 
 const store = useBienesStore();
+const authStore = useAccountStore();
 
 const showForm = ref(false);
 const isEdit = ref(false);
@@ -103,9 +107,23 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const searchTerm = ref('');
 
+// --- Lógica de Roles ---
+const isSolicitante = computed(() => authStore.user?.rol === 'solicitante');
+const headerText = computed(() => 
+    isSolicitante.value ? `Bienes de mi Departamento` : 'Bienes'
+);
+const listTitle = computed(() => 
+    isSolicitante.value ? `Listado de Bienes de mi Departamento` : 'Listado de Bienes'
+);
+
 // Centralized function to fetch data
 const fetchData = () => {
-  store.fetchBienes(currentPage.value, pageSize.value, searchTerm.value);
+  let departamentoId = null;
+  if (isSolicitante.value) {
+    departamentoId = authStore.user?.departamento_id;
+  }
+  // Pasamos el ID del departamento al fetch (la función en el store debe aceptarlo)
+  store.fetchBienes(currentPage.value, pageSize.value, searchTerm.value, departamentoId);
 };
 
 onMounted(() => {
@@ -145,7 +163,7 @@ const closeForm = () => {
 };
 
 const handleSubmit = () => {
-  toastMessage.value = isEdit.value ? '✅ Bien actualizado correctamente' : '✅ Bien creado correctamente';
+  toastMessage.value = isEdit.value ? '✅ Bien actualizado correctamente' : '✅ Operación realizada con éxito';
   const toast = new Toast(toastSuccess.value);
   toast.show();
   fetchData(); // Refetch data on submit

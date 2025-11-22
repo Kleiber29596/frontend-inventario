@@ -1,11 +1,16 @@
 <template>
     <main class="page-wrapper">
-        <HeaderPage :icon="['fas', 'trash-alt']" text="Registrar Desincorporación" />
+        <HeaderPage :icon="['fas', 'trash-alt']" text="Nueva Desincorporación" />
 
         <div class="page-body mt-3 mb-3">
             <div class="container-xl">
                 <div class="card">
-                    <!-- Barra de Progreso -->
+                    <div class="card-header">
+                        <!-- El título cambiará si estamos editando o creando -->
+                        <h3 class="card-title">{{ isEditMode ? 'Editar Desincorporación' : 'Crear Nueva Desincorporación' }}</h3>
+                    </div>
+                    <div class="card-body">
+                         <!-- Barra de Progreso -->
                     <div class="steps">
                         <a v-for="step in steps" :key="step.id" class="step-item" :class="{
                             'active': currentStep === step.id,
@@ -17,8 +22,6 @@
                             <div class="step-label">{{ step.title }}</div>
                         </a>
                     </div>
-
-                    <div class="card-body">
                         <div v-if="store.loading && !store.solicitud" class="text-center p-5">
                             <div class="spinner-border" role="status"></div>
                             <p class="mt-2">Cargando datos de la solicitud...</p>
@@ -34,7 +37,11 @@
                                         <input type="text" class="form-control" :value="store.solicitud.departamento_solicitante.nombre" readonly>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label">Responsable (Solicitante)</label>
+                                        <label class="form-label">Solicitante</label>
+                                        <input type="text" class="form-control" :value="`${store.solicitud.solicitante.persona.primer_nombre} ${store.solicitud.solicitante.persona.primer_apellido}`" readonly>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Usuario del Bien</label>
                                         <input type="text" class="form-control" :value="`${store.solicitud.solicitante.persona.primer_nombre} ${store.solicitud.solicitante.persona.primer_apellido}`" readonly>
                                     </div>
                                 </div>
@@ -76,10 +83,8 @@
                                                 <td>{{ detalle.bien_label }}</td>
                                                 <td>{{ detalle.bien_serial }}</td>
                                                 <td>
-                                                    <CustomVueSelect v-model="detalle.condicion_final_id"
-                                                        :options="store.catalogs.estadosFisicos"
-                                                        placeholder="Selecciona condición..." label="nombre"
-                                                        track-by="id" />
+                                                    <!-- Campo de solo lectura para la condición final -->
+                                                    <input type="text" class="form-control" :value="getCondicionNombre(detalle.condicion_final_id)" readonly>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -92,7 +97,8 @@
                                 <h4 class="mb-4">Paso 3: Resumen y Confirmación</h4>
                                 <div class="card card-body">
                                     <p><strong>Departamento:</strong> {{ store.solicitud.departamento_solicitante.nombre }}</p>
-                                    <p><strong>Responsable:</strong> {{ `${store.solicitud.solicitante.persona.primer_nombre} ${store.solicitud.solicitante.persona.primer_apellido}` }}</p>
+                                    <p><strong>Solicitante:</strong> {{ `${store.solicitud.solicitante.persona.primer_nombre} ${store.solicitud.solicitante.persona.primer_apellido}` }}</p>
+                                    <p><strong>Usuario del Bien:</strong> {{ `${store.solicitud.solicitante.persona.primer_nombre} ${store.solicitud.solicitante.persona.primer_apellido}` }}</p>
                                     <p><strong>Motivo:</strong> {{ store.solicitud.motivo_solicitud.descripcion }}</p>
                                     <p><strong>Fecha de Desincorporación:</strong> {{ form.fecha_desincorporacion }}</p>
                                     <hr>
@@ -187,11 +193,16 @@ const canSubmit = computed(() => canProceed.value);
 
 const getCondicionNombre = (id) => {
     // El v-model del select guarda el objeto completo, no solo el id.
-    // Por lo tanto, 'id' aquí es en realidad el objeto de la condición.
+    // O puede ser solo el ID si viene precargado.
     if (typeof id === 'object' && id !== null && id.nombre) {
         return id.nombre;
     }
-    return 'No seleccionada';
+    // Si 'id' es un número (el ID), buscamos en el catálogo
+    if (typeof id === 'number' && store.catalogs.estadosFisicos) {
+        const condicion = store.catalogs.estadosFisicos.find(e => e.id === id);
+        return condicion ? condicion.nombre : 'Condición no encontrada';
+    }
+    return 'N/A';
 };
 
 const cancel = () => router.push('/desincorporaciones');
@@ -209,11 +220,13 @@ const handleSubmit = async () => {
         solicitud_id: form.value.solicitud_id,
         fecha_desincorporacion: form.value.fecha_desincorporacion,
         persona_responsable_id: store.solicitud.solicitante.id, // Añadimos el ID del responsable
+        usuario_bien_id: store.solicitud.solicitante.id, // ID del responsable del bien
         departamento_id: store.solicitud.departamento_solicitante.id, // Añadimos el ID del departamento
+        motivo_id: store.solicitud.motivo_solicitud.id, // Añadimos el ID del motivo de la solicitud
         bienes: form.value.detalles.map(d => ({
             bien_id: d.bien_id,
             descripcion: d.bien_label, // El backend espera una descripción para el detalle
-            condicion_final_id: d.condicion_final_id.id || d.condicion_final_id,
+            condicion_final_id: (typeof d.condicion_final_id === 'object' && d.condicion_final_id !== null) ? d.condicion_final_id.id : d.condicion_final_id,
         })),
     };
 

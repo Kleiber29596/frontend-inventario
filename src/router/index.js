@@ -132,7 +132,7 @@ const router = createRouter({
       path: '/bienes', // Corregido a minúsculas para consistencia
       name: 'bienes',
       component: BienesView,
-      meta: { requiresAdmin: true, requiredAuth: true }
+      meta: { requiredAuth: true }
     },
 
 
@@ -155,7 +155,7 @@ const router = createRouter({
       name: 'asignaciones',
       component: AsignacionView,
       meta: {
-        requiresAdmin: true,
+        // requiresAdmin: true,
         requiredAuth: true
       }
     },

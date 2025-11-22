@@ -19,6 +19,7 @@
                         <table class="table table-vcenter card-table table-striped">
                             <thead>
                                 <tr>
+                                    <th class="text-center">N solicitud</th>
                                     <th>Solicitante</th>
                                     <th>Departamento</th>
                                     <th>Motivo</th>
@@ -33,6 +34,7 @@
                                     <td colspan="7" class="text-center">Cargando...</td>
                                 </tr>
                                 <tr v-for="solicitud in store.solicitudes" :key="solicitud.id">
+                                    <td class="text-center">{{ solicitud.nro_solicitud? solicitud.nro_solicitud : 'Indefinido'}}</td>
                                     <td>{{ `${solicitud.solicitante.persona.primer_nombre} ${solicitud.solicitante.persona.primer_apellido}` }}</td>
                                     <td>{{ solicitud.departamento_solicitante?.nombre || 'N/A' }}</td>
                                     <td>{{ solicitud.motivo_solicitud?.descripcion || 'N/A' }}</td>
@@ -44,6 +46,9 @@
                                         </span>
                                     </td>
                                     <td>
+                                        <button class="btn btn-action" @click="openDetallesModal(solicitud.id)" title="Ver Detalles">
+                                            <IconEye size="20" stroke-width="1.5" />
+                                        </button>
                                         <!-- Botones solo para Administradores -->
                                         <template v-if="accountStore.isAdmin">
                                             <button class="btn btn-action btn-success" 
@@ -73,6 +78,7 @@
                 </div>
 
                 <SolicitudForm :solicitud="selectedSolicitud" :showModal="showSolicitudModal" @close="closeModal" />
+                <SolicitudDetallesModal :showModal="showDetallesModal" :solicitud="store.solicitudSeleccionada" :loading="store.loading" @close="closeDetallesModal" />
             </div>
         </div>
         <FooterPage />
@@ -87,7 +93,8 @@ import HeaderPage from '@/components/page/header/Component.vue';
 import { useRouter } from 'vue-router';
 import FooterPage from '@/components/page/footer/Component.vue';
 import SolicitudForm from '@/components/forms/SolicitudForm.vue';
-import { IconEdit, IconCheck, IconX } from '@tabler/icons-vue';
+import SolicitudDetallesModal from '@/components/modals/SolicitudDetallesModal.vue';
+import { IconEdit, IconCheck, IconX, IconEye } from '@tabler/icons-vue';
 import Pagination from '@/components/paginacion/paginacion.vue';
 import SearchInput from '@/components/paginacion/searchInput.vue';
 
@@ -96,6 +103,7 @@ const store = useSolicitudStore();
 const accountStore = useAccountStore();
 const selectedSolicitud = ref(null);
 const showSolicitudModal = ref(false);
+const showDetallesModal = ref(false);
 
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -117,6 +125,16 @@ const closeModal = () => {
     showSolicitudModal.value = false;
     selectedSolicitud.value = null;
     fetchData();
+};
+
+const openDetallesModal = (solicitudId) => {
+    store.fetchSolicitudById(solicitudId);
+    showDetallesModal.value = true;
+};
+
+const closeDetallesModal = () => {
+    showDetallesModal.value = false;
+    store.solicitudSeleccionada = null;
 };
 
 const atenderSolicitud = (solicitud) => {

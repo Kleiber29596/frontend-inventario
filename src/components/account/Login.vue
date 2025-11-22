@@ -22,7 +22,7 @@
                                         correo</a>
                                 </span>
                             </label>
-                            <Field v-model="email" name="email" placeholder="tucorreo@email.com" id="floating-input-u"
+                            <Field v-model="email" name="email" placeholder="Sobrenombre64*" id="floating-input-u"
                                 autocomplete="off" type="email" class="form-control"
                                 :class="{ 'is-invalid': errors.email }" />
                             <div class="invalid-feedback">{{ errors.email }}</div>

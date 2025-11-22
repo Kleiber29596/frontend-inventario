@@ -15,7 +15,7 @@
                                     :options="['ASIGNACION', 'DESINCORPORACION']"
                                     placeholder="Selecciona el tipo..." />
                             </div>
-                             <div class="col-md-6 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Departamento Solicitante</label>
                                 <CustomVueSelect v-model="form.departamento_solicitante_id"
                                     :options="store.catalogs.departamentos"
@@ -23,13 +23,19 @@
                             </div>
                         </div>
                         <div class="row">
+                            <div class="col-md-6 mb-3"  v-if="form.tipo === 'ASIGNACION'">
+                                <label class="form-label required">Usuario del Bien</label>
+                                <CustomVueSelect v-model="form.usuario_bien_id"
+                                    :options="store.catalogs.personas"
+                                    placeholder="Selecciona un usuario..." label="nombres_apellidos" track-by="id" :disabled="!form.departamento_solicitante_id" />
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Motivo</label>
                                 <CustomVueSelect v-model="form.motivo_solicitud_id" :options="store.catalogs.motivos"
                                     placeholder="Selecciona un motivo..." label="descripcion" track-by="id" />
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Tiempo Requerido</label>
+                            <div class="col-md-6 mb-3" v-if="form.tipo === 'ASIGNACION'">
+                                <label class="form-label">Fecha Requerida</label>
                                 <input type="date" class="form-control" v-model="form.tiempo_requerido">
                             </div>
                         </div>
@@ -84,6 +90,7 @@ const isEdit = ref(false);
 const form = ref({
     id: null,
     departamento_solicitante_id: null,
+    usuario_bien_id: null,
     motivo_solicitud_id: null,
     descripcion: '',
     tiempo_requerido: new Date().toISOString().slice(0, 10),
@@ -93,7 +100,10 @@ const form = ref({
 });
 
 onMounted(() => {
+    // Carga los catálogos base (departamentos, estatus)
     store.fetchCatalogos();
+    // Carga los motivos para el tipo por defecto ('ASIGNACION')
+    store.fetchMotivosPorTipo(form.value.tipo);
 });
 
 watch(() => props.solicitud, (newVal) => {
@@ -113,6 +123,7 @@ const resetForm = () => {
     form.value = {
         id: null,
         departamento_solicitante_id: null,
+        usuario_bien_id: null,
         motivo_solicitud_id: null,
         descripcion: '',
         tiempo_requerido: new Date().toISOString().slice(0, 10),
@@ -122,20 +133,37 @@ const resetForm = () => {
     };
 };
 
-// Cuando cambia el tipo de solicitud o el departamento, cargamos los bienes correspondientes
-watch(() => [form.value.tipo, form.value.departamento_solicitante_id], ([newTipo, newDepto]) => {
-    if (newTipo === 'DESINCORPORACION' && newDepto?.id) {
-        bienesStore.fetchBienesAsignadosPorDepartamento(newDepto.id);
-    } else {
-        // Limpiamos la lista si no es para desincorporar
-        bienesStore.bienesAsignados = [];
+// Cuando cambia el tipo de solicitud, cargamos los motivos correspondientes
+watch(() => form.value.tipo, (newTipo) => {
+    // Limpiamos el motivo seleccionado anteriormente
+    form.value.motivo_solicitud_id = null;
+    form.value.bienes = []; // También limpiamos los bienes por si acaso
+    // Buscamos los nuevos motivos
+    store.fetchMotivosPorTipo(newTipo);
+});
+
+// Cuando cambia el departamento, siempre cargamos las personas correspondientes.
+watch(() => form.value.departamento_solicitante_id, (newDepto) => {
+    form.value.usuario_bien_id = null;
+    if (newDepto?.id) {
+        store.fetchPersonasPorDepartamento(newDepto.id);
     }
 }, { deep: true });
+
+// Cuando cambia el tipo de solicitud, cargamos los bienes si es para desincorporar.
+watch(() => form.value.departamento_solicitante_id?.id, (newdepartamento) => {
+    if (newdepartamento && form.value.tipo === 'DESINCORPORACION') {
+        bienesStore.fetchBienesAsignadosPorDepartamento(newdepartamento);
+    } else {
+        bienesStore.bienesAsignados = [];
+    }
+});
 
 const handleSubmit = async () => {
     const payload = {
         ...form.value,
         departamento_solicitante_id: form.value.departamento_solicitante_id?.id || form.value.departamento_solicitante_id,
+        usuario_bien_id: form.value.usuario_bien_id?.id || form.value.usuario_bien_id,
         motivo_solicitud_id: form.value.motivo_solicitud_id?.id || form.value.motivo_solicitud_id,
         estatus_id: form.value.estatus_id?.id || form.value.estatus_id,
         // Enviamos solo los IDs de los bienes

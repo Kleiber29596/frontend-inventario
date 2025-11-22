@@ -8,10 +8,10 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 export const useAsignacionStore = defineStore('asignacion', {
   state: () => ({
     asignaciones: [],
+    asignacionSeleccionada: null, // Para el modal de detalles
     bienes: [],
     searchTerm: '',
     totalItems: 0,
-    totalPages: 1,
     currentPage: 1,
 
     loading: false,
@@ -21,7 +21,8 @@ export const useAsignacionStore = defineStore('asignacion', {
       departamentos: [],
       estatus: [], // For assignments
       estatusBienes: [], // For assets
-      motivos: [],
+      motivos_asignacion: [],
+      motivos_devolucion: [],
       estadosFisicos: [],
     },
   }),
@@ -39,7 +40,6 @@ export const useAsignacionStore = defineStore('asignacion', {
         });
         this.asignaciones = response.data.results || [];
         this.totalItems = response.data.total || 0;
-        this.totalPages = response.data.total_pages || 1;
         this.currentPage = response.data.current_page || 1;
       } catch (error) {
         console.error("Error al obtener asignaciones:", error);
@@ -83,8 +83,8 @@ export const useAsignacionStore = defineStore('asignacion', {
         return response; // Devolver la respuesta para poder redirigir
       } catch (error) {
         console.error("Error al crear la asignación:", error);
-        throw error;
         useToast().showToast('Error al crear la asignación', 'error');
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -97,8 +97,8 @@ export const useAsignacionStore = defineStore('asignacion', {
         useToast().showToast('Asignación actualizada exitosamente');
       } catch (error) {
         console.error("Error al actualizar la asignación:", error);
-        throw error;
         useToast().showToast('Error al actualizar la asignación', 'error');
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -139,21 +139,38 @@ export const useAsignacionStore = defineStore('asignacion', {
       }
     },
 
+    async fetchAsignacionConDetalles(id) {
+      this.loading = true;
+      this.asignacionSeleccionada = null;
+      try {
+        // Este endpoint debe devolver la asignación con sus relaciones: detalles, bienes, devoluciones, etc.
+        const response = await axios.get(`${BASE_URL}asignaciones/asignaciones/${id}/detallado`);
+        this.asignacionSeleccionada = response.data;
+      } catch (error) {
+        console.error(`Error al obtener los detalles completos de la asignación ${id}:`, error);
+        useToast().showToast('Error al cargar los detalles', 'error');
+      } finally {
+        this.loading = false;
+      }
+    },
+
 
     async fetchCatalogos() {
       // No es necesario 'this.loading' aquí si la acción principal ya lo gestiona
       try {
-        const [departamentosRes, estatusAsignacionRes, estatusBienesRes, motivosRes, estadosFisicosRes] = await Promise.all([
+        const [departamentosRes, estatusAsignacionRes, estatusBienesRes, motivosAsignacionRes, motivosDevolucionRes, estadosFisicosRes] = await Promise.all([
           axios.get(`${BASE_URL}auxiliares/dependencias/select`),
-          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo=Asignacion`),
+          axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo_estatus=Asignacion`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estatus/select?tipo=Bienes`),
           axios.get(`${BASE_URL}auxiliares/motivos/select?tipo=Asignacion`),
+          axios.get(`${BASE_URL}auxiliares/motivos/select?tipo=Devolucion`),
           axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estados_fisicos/select`)
         ]);
         this.catalogs.departamentos = Array.isArray(departamentosRes.data) ? departamentosRes.data : [];
         this.catalogs.estatus       = Array.isArray(estatusAsignacionRes.data) ? estatusAsignacionRes.data : [];
         this.catalogs.estatusBienes = Array.isArray(estatusBienesRes.data) ? estatusBienesRes.data : [];
-        this.catalogs.motivos = Array.isArray(motivosRes.data) ? motivosRes.data : [];
+        this.catalogs.motivos_asignacion = Array.isArray(motivosAsignacionRes.data) ? motivosAsignacionRes.data : [];
+        this.catalogs.motivos_devolucion = Array.isArray(motivosDevolucionRes.data) ? motivosDevolucionRes.data : [];
         this.catalogs.estadosFisicos = Array.isArray(estadosFisicosRes.data) ? estadosFisicosRes.data : [];
         this.catalogs.personas = []; // Personas se cargarán dinámicamente
       } catch (error) {
@@ -182,36 +199,23 @@ export const useAsignacionStore = defineStore('asignacion', {
       }
     },
 
-    async guardarDevolucion(devolucionForm) {
+    async createDevolucion(payload) {
       this.loading = true;
       try {
-        // 1. Actualizar cada detalle con su condición
-        for (const detalle of devolucionForm.detalles) {
-          await axios.put(
-            `${BASE_URL}asignaciones/detalle/${detalle.id}/devolucion`,
-            null,
-            { params: { condicion: detalle.condicion_devolucion } }
-          );
-        }
-
-        // 2. Marcar la asignación como devuelta
-        await axios.put(`${BASE_URL}asignaciones/${devolucionForm.asignacion_id}/devolucion`, {
-          fecha_fin: devolucionForm.fecha_devolucion
+        const response = await axios.post(`${BASE_URL}asignaciones/devolucion`, payload, {
+            // headers: { 'Authorization': `Bearer ${this.authStore.token}` } // Si usas autenticación
         });
-
-        // 3. Refrescar listado
-        this.fetchCatalogos(),
-        await this.fetchAsignaciones();
-        useToast().showToast('Devolución guardada exitosamente');
+        useToast().showToast('Devolución registrada correctamente.');
+        return response.data;
       } catch (error) {
-        console.error("Error al guardar la devolución:", error);
+        const errorMessage = error.response?.data?.detail || 'Error al registrar la devolución.';
+        useToast().showToast(errorMessage, 'error');
+        console.error('Error en createDevolucion:', error);
         throw error;
-        useToast().showToast('Error al guardar la devolución', 'error');
       } finally {
         this.loading = false;
       }
     },
-
     async fetchAsignacionDetalles(asignacionId) {
       try {
         const response = await axios.get(`${BASE_URL}asignaciones/${asignacionId}/detalles`);

@@ -35,13 +35,14 @@
                                 <input type="email" class="form-control" v-model="form.correo" placeholder="juan.perez@example.com" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Número de Contacto</label>
+                                <label class="form-label">Número dedsdsdssd Contacto</label>
                                 <input type="text" class="form-control" v-model="form.num_contacto" placeholder="0412-1234567" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Cargo</label>
                                 <input type="text" class="form-control" v-model="form.cargo" placeholder="Analista" required>
                             </div>
+                           
                             <div class="col-md-6 mb-3">
                                 <label class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" v-model="form.Estado">
@@ -63,6 +64,7 @@
 <script setup>
 import { ref, watch, computed, onMounted } from 'vue';
 import { usePersonaStore } from '@/stores/personaStore';
+import CustomVueSelect from '@/components/select/select-vue.vue';
 import { Modal } from 'bootstrap';
 
 const props = defineProps({
@@ -89,6 +91,7 @@ const form = ref({
     num_contacto: '',
     cargo: '',
     Estado: true,
+    dependencia_id: null,
 });
 
 const personaModal = ref(null);
@@ -100,13 +103,24 @@ onMounted(() => {
     modalInstance = new Modal(personaModal.value);
     personaModal.value.addEventListener('hidden.bs.modal', () => {
         emit('close');
+        store.fetchCatalogos(); // Cargar catálogos para el formulario
     });
 });
 
 watch(() => props.showModal, (newVal) => {
     if (newVal) {
         if (props.persona) {
-            form.value = { ...props.persona };
+            // Asignación explícita para asegurar que los datos se mapeen correctamente
+            form.value.id = props.persona.id;
+            form.value.nacionalidad = props.persona.nacionalidad;
+            form.value.cedula = props.persona.cedula;
+            form.value.primer_nombre = props.persona.primer_nombre;
+            form.value.primer_apellido = props.persona.primer_apellido;
+            form.value.correo = props.persona.correo;
+            form.value.num_contacto = props.persona.num_contacto;
+            form.value.cargo = props.persona.cargo;
+            form.value.Estado = props.persona.Estado;
+            form.value.dependencia_id = props.persona.dependencia || null; // <-- Aquí está la corrección
         } else {
             form.value = {
                 id: null,
@@ -118,6 +132,7 @@ watch(() => props.showModal, (newVal) => {
                 num_contacto: '',
                 cargo: '',
                 Estado: true,
+                dependencia_id: null,
             };
         }
         modalInstance.show();
@@ -127,11 +142,17 @@ watch(() => props.showModal, (newVal) => {
 });
 
 const submitForm = async () => {
+    const payload = {
+        ...form.value,
+        // Aseguramos que se envíe solo el ID si el valor es un objeto
+        dependencia_id: form.value.dependencia_id?.id || form.value.dependencia_id,
+    };
+
     try {
         if (isEditing.value) {
-            await store.updatePersona(form.value.id, form.value);
+            await store.updatePersona(form.value.id, payload);
         } else {
-            await store.createPersona(form.value);
+            await store.createPersona(payload);
         }
         emit('close');
     } catch (error) {

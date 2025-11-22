@@ -18,6 +18,7 @@
                             <option value="Asignacion">Asignacion</option>
                             <option value="Desincorporacion">Desincorporacion</option>
                             <option value="Solicitud">Solicitud</option>
+                            <option value="Devolucion">Devolucion</option>
                            </select>
                             
                             

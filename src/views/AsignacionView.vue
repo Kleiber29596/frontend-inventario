@@ -1,16 +1,17 @@
 <template>
     <main class="page-wrapper">
         <!-- Page header -->
-        <HeaderPage :icon="['fas', 'user-tag']" text="Asignaciones" />
+        <!-- NOTA: He añadido un nuevo icono 'IconEye' para la acción de visualizar -->
+        <HeaderPage :icon="['fas', 'user-tag']" :text="headerText" />
 
         <div class="page-body mt-3 mb-3">
             <div class="ps-3 pe-3">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between">
-                        <p class="text-secondary m-0">Listado de Asignaciones</p>
+                        <p class="text-secondary m-0">{{ listTitle }}</p>
                         <div class="d-flex gap-2">
                             <SearchInput v-model="searchTerm" />
-                            <button class="btn btn-primary ms-2" @click="openModal()">Nueva Asignacion</button>
+                          
                         </div>
                     </div>
                     <div class="card-body">
@@ -19,11 +20,11 @@
                                 <thead>
                                     <tr>
                                         <th>ID</th>
-                                        <th>Persona</th>
+                                        <th>usuario del bien</th>
                                         <th>Departamento</th>
                                         <th>Fecha de Inicio</th>
                                         <th>Estatus</th>
-                                      
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -32,7 +33,7 @@
                                     </tr>
                                     <tr v-for="asignacion in store.asignaciones" :key="asignacion.id">
                                         <td>{{ asignacion.id }}</td>
-                                        <td>{{ asignacion.persona.primer_nombre }}</td>
+                                        <td>{{ asignacion.usuario_bien.primer_nombre}} {{ asignacion.usuario_bien.primer_apellido }}</td>
                                         <td>{{ asignacion.departamento.nombre }}</td>
                                         <td>{{ asignacion.fecha_inicio }}</td>
                                         <td> <span class="badge" :class="getEstatusClass(asignacion.estatus?.descripcion)">
@@ -40,12 +41,15 @@
                                         </span>
                                         </td>
                                         <td>
-                                            <a class="btn btn-action" @click="openModal(asignacion)">
-                                            <IconEdit size="24" stroke-width="1.5" />
+                                            <a class="btn btn-action" title="Ver Detalles" @click="openDetallesModal(asignacion.id)">
+                                                <IconEye size="24" stroke-width="1.5" />
+                                            </a>
+                                            <a class="btn btn-action" title="Editar" @click="openModal(asignacion)">
+                                                <IconEdit size="24" stroke-width="1.5" />
                                             </a>
                                         </td>
                                         <td>
-                                            <a class="btn btn-action" @click="openDevolucionModal(asignacion)">
+                                            <a class="btn btn-action" title="Registrar Devolución" @click="openDevolucionModal(asignacion)">
                                             <IconArrowBack size="24" stroke-width="1.5" />
                                             </a>
                                         </td>
@@ -67,26 +71,32 @@
         <AsignacionForm :asignacion="selectedAsignacion" :showModal="showAsignacionModal" @close="closeCreateModal" />
         <UpdateAsignacionForm :asignacion="selectedAsignacion" :showModal="showUpdateAsignacionModal" @close="closeUpdateModal" />
         <DevolucionAsignacionModal :asignacion="selectedAsignacionForDevolucion" :showModal="showDevolucionModal" @close="closeDevolucionModal" />
+        <AsignacionDetallesModal :showModal="showDetallesModal" :asignacion="store.asignacionSeleccionada" :loading="store.loading" @close="closeDetallesModal" />
 
     </main>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useAsignacionStore } from '@/stores/asignacionStore';
+import { useAccountStore } from '@/stores/account.js';
+// import { useAuthStore } from '@/stores/
 import HeaderPage from '@/components/page/header/Component.vue';
 import AsignacionForm from '@/components/forms/AsignacionForm.vue';
 import UpdateAsignacionForm from '@/components/forms/UpdateAsignacionForm.vue';
 import DevolucionAsignacionModal from '@/components/modals/DevolucionAsignacionModal.vue';
-import { IconEdit, IconArrowBack } from '@tabler/icons-vue';
+import AsignacionDetallesModal from '@/components/modals/AsignacionDetallesModal.vue';
+import { IconEdit, IconArrowBack, IconEye } from '@tabler/icons-vue';
 import Pagination from '@/components/paginacion/paginacion.vue'
 import SearchInput from '@/components/paginacion/searchInput.vue'
 
 const store = useAsignacionStore();
+const authStore = useAccountStore();
 const selectedAsignacion = ref(null);
 const showAsignacionModal = ref(false);
 const showUpdateAsignacionModal = ref(false);
 const showDevolucionModal = ref(false);
+const showDetallesModal = ref(false);
 const selectedAsignacionForDevolucion = ref(null);
 
 
@@ -95,9 +105,23 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const searchTerm = ref('');
 
+// --- Lógica de Roles ---
+const isSolicitante = computed(() => authStore.user?.rol === 'solicitante');
+const headerText = computed(() => 
+    isSolicitante.value ? `Asignaciones de mi Departamento` : 'Asignaciones'
+);
+const listTitle = computed(() => 
+    isSolicitante.value ? `Listado de Asignaciones de mi Departamento` : 'Listado de Asignaciones'
+);
+
 // Función centralizada para cargar los datos
 const fetchData = () => {
-    store.fetchAsignaciones(currentPage.value, pageSize.value, searchTerm.value);
+    let departamentoId = null;
+    if (isSolicitante.value) {
+        departamentoId = authStore.user?.departamento_id;
+    }
+    // Pasamos el ID del departamento al fetch (la función en el store debe aceptarlo)
+    store.fetchAsignaciones(currentPage.value, pageSize.value, searchTerm.value, departamentoId);
 };
 
 onMounted(() => {
@@ -144,6 +168,15 @@ const closeDevolucionModal = () => {
     store.fetchAsignaciones(); // Recargar lista al cerrar
 };
 
+const openDetallesModal = (asignacionId) => {
+    store.fetchAsignacionConDetalles(asignacionId);
+    showDetallesModal.value = true;
+};
+
+const closeDetallesModal = () => {
+    showDetallesModal.value = false;
+    store.asignacionSeleccionada = null;
+};
 
 const getEstatusClass = (estatus) => {
     if (estatus === 'Activa') return 'bg-primary';

@@ -54,7 +54,7 @@ export const useBienesStore = defineStore('bienes', {
       }
       this.loading = true;
       try {
-        const response = await axios.get(`${BASE_URL}bienes/bienes/asignados-por-departamento/${departamentoId}`);
+        const response = await axios.get(`${BASE_URL}bienes/devueltos-por-departamento/${departamentoId}`);
         this.bienesAsignados = response.data || [];
       } catch (error) {
         console.error("Error al obtener bienes asignados:", error);
@@ -75,6 +75,22 @@ export const useBienesStore = defineStore('bienes', {
         console.error("Error al crear el bien:", error);
         useToast().showToast('Error al crear el bien', 'error');
         throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async createBienesEnLote(payload) {
+      this.loading = true;
+      try {
+        await axios.post(`${BASE_URL}bienes/crear-lote/`, payload);
+        await this.fetchBienes(1, 10, ''); // Refresca la lista para mostrar los nuevos bienes
+        useToast().showToast('Lote de bienes creado exitosamente');
+      } catch (error) {
+        console.error("Error al crear el lote de bienes:", error);
+        const errorMessage = error.response?.data?.detail || 'Error al crear el lote de bienes';
+        useToast().showToast(errorMessage, 'error');
+        throw error; // Propaga el error para que el formulario pueda manejarlo
       } finally {
         this.loading = false;
       }

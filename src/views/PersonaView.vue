@@ -108,6 +108,16 @@
                                     <input type="text" class="form-control" v-model="form.cargo" placeholder="Analista" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
+                                    <label class="form-label">Dependencia *</label>
+                                    <CustomVueSelect
+                                        v-model="form.dependencia_id" 
+                                        :options="asignacionStore.catalogs.departamentos"
+                                        placeholder="Selecciona una dependencia..."
+                                        label="nombre"
+                                        track-by="id"
+                                        required />
+                                </div>
+                                <div class="col-md-6 mb-3">
                                     <label class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" v-model="form.Estado">
                                         <span class="form-check-label">Activo</span>
@@ -134,12 +144,15 @@
 import { ref, onMounted, watch, reactive } from 'vue';
 import Swal from 'sweetalert2';
 import { usePersonaStore } from '@/stores/personaStore';
+import { useAsignacionStore } from '@/stores/asignacionStore'; // 1. Importar el store correcto
 import HeaderPage from '@/components/page/header/Component.vue';
 import { IconEdit, IconTrash } from '@tabler/icons-vue';
 import Pagination from '@/components/paginacion/paginacion.vue'
+import CustomVueSelect from '@/components/select/select-vue.vue';
 import SearchInput from '@/components/paginacion/searchInput.vue'
 
 const store = usePersonaStore();
+const asignacionStore = useAsignacionStore(); // 2. Crear instancia del store
 
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -158,13 +171,17 @@ const form = reactive({
     num_contacto: '',
     cargo: '',
     Estado: true,
+    dependencia_id: null,
 });
 
 const fetchData = () => {
     store.fetchPersonas(currentPage.value, pageSize.value, searchTerm.value);
 };
 
-onMounted(fetchData);
+onMounted(() => {
+    fetchData();
+    asignacionStore.fetchCatalogos(); // 3. Llamar a la función desde el store correcto
+});
 
 watch([currentPage, pageSize, searchTerm], fetchData, { immediate: false });
 
@@ -173,13 +190,14 @@ const resetForm = () => {
         id: null, nacionalidad: 'V', cedula: '', primer_nombre: '',
        primer_apellido: '', correo: '',
         num_contacto: '', cargo: '', Estado: true,
+        dependencia_id: null,
     });
 };
 
 const openForm = (edit = false, data = null) => {
     isEdit.value = edit;
     if (edit && data) {
-        Object.assign(form, data);
+        Object.assign(form, { ...data, dependencia_id: data.dependencia || null });
     } else {
         resetForm();
     }
@@ -192,11 +210,18 @@ const closeForm = () => {
 };
 
 const submitForm = async () => {
+    // Construimos el payload explícitamente para evitar campos no deseados.
+    const payload = {
+        ...form, // Usamos el spread operator para copiar todos los campos del formulario reactivo
+        dependencia: form.dependencia_id?.id || form.dependencia_id, // Aseguramos que se envíe solo el ID.
+    };
+    delete payload.dependencia_id; // Eliminamos la clave original para evitar duplicados
+
     try {
         if (isEdit.value) {
-            await store.updatePersona(form.id, form);
+            await store.updatePersona(form.id, payload);
         } else {
-            await store.createPersona(form);
+            await store.createPersona(payload);
         }
         closeForm();
     } catch (error) {

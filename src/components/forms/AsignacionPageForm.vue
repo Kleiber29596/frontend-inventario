@@ -19,30 +19,36 @@
                 <div v-if="currentStep === 1">
                     <h4 class="mb-3">Paso 1: Información de la Asignación</h4>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="departamento" class="form-label">Departamento</label>
                             <CustomVueSelect :options="store.catalogs.departamentos" v-model="form.departamento_id"
                                 placeholder="Selecciona un departamento..." label="nombre" track-by="id" />
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="persona" class="form-label">Responsable</label>
-                            <CustomVueSelect :options="store.catalogs.personas" v-model="form.persona_id"
-                                placeholder="Selecciona una persona..." label="primer_nombre" track-by="id"
+                        <div class="col-md-4 mb-3">
+                            <label for="responsable" class="form-label">Responsable (Patrimonial)</label>
+                            <CustomVueSelect :options="store.catalogs.personas" v-model="form.responsable_patrimonial"
+                                placeholder="Selecciona un usuario..." label="nombres_apellidos" track-by="id"
+                                :disabled="!form.departamento_id" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="usuario_bien" class="form-label">Usuario del Bien</label>
+                            <CustomVueSelect :options="store.catalogs.personas" v-model="form.usuario_bien_id"
+                                placeholder="Selecciona un usuario..." label="nombres_apellidos" track-by="id"
                                 :disabled="!form.departamento_id" />
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="fecha_inicio" class="form-label">Fecha de Inicio</label>
                             <input type="date" class="form-control" id="fecha_inicio" v-model="form.fecha_inicio">
                         </div>
 
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="fecha_inicio" class="form-label">Fecha fin</label>
                             <input type="date" class="form-control" id="fecha_fin" v-model="form.fecha_fin">
                         </div>
 
-                        <div class="col-md mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="motivo" class="form-label">Motivo</label>
                             <CustomVueSelect :options="store.catalogs.motivos" v-model="form.motivo"
                                 placeholder="Selecciona un motivo..." label="descripcion" track-by="id" />
@@ -66,10 +72,11 @@
                 <div v-if="currentStep === 3">
                     <h4 class="mb-3">Paso 3: Resumen y Confirmación</h4>
                     <div class="card card-body">
-                        <p><strong>Departamento:</strong> {{ getDepartamentoNombre }}</p>
-                        <p><strong>Responsable:</strong> {{ getPersonaNombre }}</p>
-                        <p><strong>Fecha de Inicio:</strong> {{ form.fecha_inicio }}</p>
-                        <p><strong>Fecha de fin:</strong> {{ form.fecha_fin }}</p>
+                        <p><strong>Departamento:</strong> {{ form.departamento_id?.nombre || 'No seleccionado' }}</p>
+                        <p><strong>Responsable:</strong> {{ form.responsable_patrimonial?.primer_nombre}} {{ form.responsable_patrimonial?.primer_apellido || 'No seleccionado'}}</p>
+                        <p><strong>Usuario del Bien:</strong> {{ getUsuarioBienNombre }}</p>
+                        <p><strong>Fecha de Inicio:</strong> {{ form.fecha_inicio || 'No especificada' }}</p>
+                        <p><strong>Fecha de fin:</strong> {{ form.fecha_fin || 'Indeterminada' }}</p>
                         <p><strong>Motivo:</strong> {{ getMotivoNombre }}</p>
                         <hr>
                         <h5>Bienes Seleccionados ({{ form.bienes_id.length }})</h5>
@@ -127,7 +134,7 @@ const steps = ref([
 const canProceed = computed(() => {
     switch (currentStep.value) {
         case 1:
-            return form.value.departamento_id && form.value.persona_id && form.value.fecha_inicio;
+            return form.value.departamento_id && form.value.usuario_bien_id && form.value.fecha_inicio;
         case 2:
             return form.value.bienes_id.length > 0;
         default:
@@ -136,19 +143,20 @@ const canProceed = computed(() => {
 });
 
 const canSubmit = computed(() => {
-    return form.value.departamento_id && form.value.persona_id &&
-        form.value.fecha_inicio && form.value.bienes_id.length > 0;
+    return form.value.departamento_id && form.value.usuario_bien_id && form.value.fecha_inicio && form.value.bienes_id.length > 0;
 });
 
 // Computed para mostrar datos en el resumen
-const getDepartamentoNombre = computed(() => {
-    return form.value.departamento_id?.nombre || 'No seleccionado';
+const getResponsableNombre = computed(() => {
+    const responsable = form.value.departamento_id?.responsable;
+    if (!responsable) return 'Seleccione un departamento';
+    return `${responsable.primer_nombre} ${responsable.primer_apellido}, ${responsable.cargo}`.trim();
 });
 
-const getPersonaNombre = computed(() => {
-    if (!form.value.persona_id) return 'No seleccionada';
-    const persona = form.value.persona_id;
-    return `${persona.primer_nombre}  ${persona.primer_apellido}, ${persona.cargo}`.trim();
+const getUsuarioBienNombre = computed(() => {
+    if (!form.value.usuario_bien_id) return 'No seleccionado';
+    const usuario = form.value.usuario_bien_id;
+    return `${usuario.primer_nombre}  ${usuario.primer_apellido}`.trim();
 });
 
 const getMotivoNombre = computed(() => {
@@ -171,9 +179,10 @@ onMounted(async () => {
             if (solicitud) {
                 // Pre-cargamos el formulario con los datos de la solicitud
                 form.value.departamento_id = solicitud.departamento_solicitante;
+                form.value.responsable_patrimonial = solicitud.departamento_solicitante.responsable_patrimonial;
                 form.value.motivo = solicitud.motivo_solicitud;
-                // El solicitante de la solicitud es la persona que recibe la asignación
-                form.value.persona_id = solicitud.solicitante.persona;
+                // Por defecto, el usuario del bien es el mismo solicitante
+                form.value.usuario_bien_id = solicitud.usuario_bien;
             }
         } catch (error) {
             console.error("No se pudo pre-cargar el formulario desde la solicitud:", error);
@@ -184,7 +193,8 @@ onMounted(async () => {
 const form = ref({
     id: null,
     departamento_id: null,
-    persona_id: null,
+    usuario_bien_id: null,
+    responsable_patrimonial: null,
     fecha_inicio: new Date().toISOString().slice(0, 10),
     fecha_fin: null,
     estatus_id: null,
@@ -208,7 +218,7 @@ watch(() => form.value.departamento_id, (newVal, oldVal) => {
     const oldDepId = oldVal?.id;
 
     if (newDepId !== oldDepId) {
-        form.value.persona_id = null;
+        form.value.usuario_bien_id = null;
     }
 
     if (newDepId) {
@@ -242,7 +252,7 @@ const handleSubmit = async () => {
 
     const payload = {
         departamento_id: formValue.departamento_id?.id || formValue.departamento_id,
-        persona_id: formValue.persona_id?.id,
+        usuario_bien_id: formValue.usuario_bien_id?.id,
         estatus_id: formValue.estatus_id?.id || formValue.estatus_id,
         fecha_inicio: formValue.fecha_inicio,
         fecha_fin: formValue.fecha_fin,
