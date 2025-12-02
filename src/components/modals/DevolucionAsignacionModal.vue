@@ -1,6 +1,6 @@
 <template>
     <div v-if="showModal" class="modal fade show d-block" tabindex="-1">
-        <!-- 
+        <!--
             He cambiado el modal a modal-lg ya que el XL era muy grande para el contenido.
             Si prefieres el tamaño anterior, puedes volver a cambiarlo a modal-xl.
         -->
@@ -16,7 +16,7 @@
                             <div class="col-md-6">
                                 <label class="form-label required">Fecha de devolución</label>
                                 <!-- Reemplazamos el input nativo por Flatpickr -->
-                                <flat-pickr 
+                                <flat-pickr
                                     v-model="devolucionForm.fecha_devolucion"
                                     :config="flatpickrConfig"
                                     class="form-control"
@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, computed } from 'vue';
 import { useAsignacionStore } from '@/stores/asignacionStore';
 import CustomVueSelect from '@/components/select/select-vue.vue';
 // 1. Importar el componente Flatpickr y sus estilos
@@ -114,24 +114,31 @@ const devolucionForm = reactive({
     bienes: [],
 });
 
-watch(() => props.asignacion, async (newAsignacion) => {
-    if (newAsignacion) {
-        devolucionForm.asignacion_id = newAsignacion.id;
-        devolucionForm.persona_responsable_id = newAsignacion.departamento.responsable_patrimonial_id;
+// Usamos un watch en `showModal` para controlar el llenado y reseteo del formulario.
+// Esto es más fiable que observar la prop `asignacion`.
+watch(() => props.showModal, async (isVisible) => {
+    if (isVisible && props.asignacion) {
+        // ---- LLENAR FORMULARIO AL ABRIR ----
+        const asignacionActual = props.asignacion;
+        devolucionForm.asignacion_id = asignacionActual.id;
+        devolucionForm.persona_responsable_id = asignacionActual.departamento?.responsable_patrimonial_id;
 
-        const detalles = await store.fetchAsignacionDetalles(newAsignacion.id
-        );
-        devolucionForm.bienes = detalles.map(detalle => ({
-            bien_id: detalle.bien.id,
-            bien_label: `${detalle.bien.serial_bien || 'S/S'} - ${detalle.bien.tipo_bien.descripcion} ${detalle.bien.marca.descripcion}`,
-            condicion_retorno_id: null,
-            seleccionado: false, // Añadimos la propiedad para el checkbox
-        }));
-    } else {
-        // Reset form
+        // Obtenemos los detalles frescos de los bienes
+        const detalles = await store.fetchAsignacionDetalles(asignacionActual.id);
+        if (detalles) {
+            devolucionForm.bienes = detalles.map(detalle => ({
+                bien_id: detalle.bien.id,
+                bien_label: `${detalle.bien.serial_bien || 'S/S'} - ${detalle.bien.tipo_bien.descripcion} ${detalle.bien.marca.descripcion}`,
+                condicion_retorno_id: null,
+                seleccionado: false,
+            }));
+        }
+    } else if (!isVisible) {
+        // ---- RESETEAR FORMULARIO AL CERRAR ----
         devolucionForm.asignacion_id = null;
         devolucionForm.persona_responsable_id = null;
         devolucionForm.motivo_id = null;
+        devolucionForm.fecha_devolucion = new Date().toISOString().slice(0, 16);
         devolucionForm.bienes = [];
     }
 });
@@ -140,14 +147,29 @@ const guardarDevolucion = async () => {
     // Filtramos solo los bienes que han sido seleccionados
     const bienesSeleccionados = devolucionForm.bienes.filter(b => b.seleccionado);
 
+    // --- VALIDACIONES ---
+    // 1. Validar que al menos un bien haya sido seleccionado.
+    if (bienesSeleccionados.length === 0) {
+        alert('Debes seleccionar al menos un bien para devolver.');
+        return;
+    }
+
+    // 2. Validar que cada bien seleccionado tenga una condición de retorno.
+    if (bienesSeleccionados.some(b => !b.condicion_retorno_id)) {
+        alert('Por favor, especifica la condición de retorno para todos los bienes seleccionados.');
+        return;
+    }
+
+    // --- CONSTRUCCIÓN DEL PAYLOAD ---
+    // Volvemos a la lógica original: crear un objeto JSON plano.
     const payload = {
         asignacion_id: devolucionForm.asignacion_id,
         persona_responsable_id: devolucionForm.persona_responsable_id,
-        motivo_id: devolucionForm.motivo_id?.id, // Enviamos solo el ID
+        motivo_id: devolucionForm.motivo_id?.id,
         fecha_devolucion: devolucionForm.fecha_devolucion,
         bienes: bienesSeleccionados.map(b => ({
             bien_id: b.bien_id,
-            condicion_retorno_id: b.condicion_retorno_id?.id, // Enviamos solo el ID
+            condicion_retorno_id: b.condicion_retorno_id?.id,
         })),
     };
 

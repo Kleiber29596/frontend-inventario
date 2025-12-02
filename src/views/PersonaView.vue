@@ -22,6 +22,7 @@
                                     <th>Nombre</th>
                                     <th>Apellido</th>
                                     <th>Cargo</th>
+                                    <th>Dependencia</th>
                                     <th>Activo</th>
                                     <th class="w-1">Acciones</th>
                                 </tr>
@@ -39,6 +40,7 @@
                                     <td>{{ persona.primer_nombre }}</td>
                                     <td>{{ persona.primer_apellido }}</td>
                                     <td>{{ persona.cargo }}</td>
+                                    <td>{{ persona.dependencia.nombre }}</td>
                                     <td>
                                         <span :class="['badge', persona.Estado ? 'bg-success' : 'bg-danger']">
                                             {{ persona.Estado ? 'Sí' : 'No' }}

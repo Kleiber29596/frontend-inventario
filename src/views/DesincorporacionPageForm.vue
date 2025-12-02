@@ -40,10 +40,6 @@
                                         <label class="form-label">Solicitante</label>
                                         <input type="text" class="form-control" :value="`${store.solicitud.solicitante.persona.primer_nombre} ${store.solicitud.solicitante.persona.primer_apellido}`" readonly>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Usuario del Bien</label>
-                                        <input type="text" class="form-control" :value="`${store.solicitud.solicitante.persona.primer_nombre} ${store.solicitud.solicitante.persona.primer_apellido}`" readonly>
-                                    </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
@@ -98,7 +94,6 @@
                                 <div class="card card-body">
                                     <p><strong>Departamento:</strong> {{ store.solicitud.departamento_solicitante.nombre }}</p>
                                     <p><strong>Solicitante:</strong> {{ `${store.solicitud.solicitante.persona.primer_nombre} ${store.solicitud.solicitante.persona.primer_apellido}` }}</p>
-                                    <p><strong>Usuario del Bien:</strong> {{ `${store.solicitud.solicitante.persona.primer_nombre} ${store.solicitud.solicitante.persona.primer_apellido}` }}</p>
                                     <p><strong>Motivo:</strong> {{ store.solicitud.motivo_solicitud.descripcion }}</p>
                                     <p><strong>Fecha de Desincorporación:</strong> {{ form.fecha_desincorporacion }}</p>
                                     <hr>
@@ -220,7 +215,6 @@ const handleSubmit = async () => {
         solicitud_id: form.value.solicitud_id,
         fecha_desincorporacion: form.value.fecha_desincorporacion,
         persona_responsable_id: store.solicitud.solicitante.id, // Añadimos el ID del responsable
-        usuario_bien_id: store.solicitud.solicitante.id, // ID del responsable del bien
         departamento_id: store.solicitud.departamento_solicitante.id, // Añadimos el ID del departamento
         motivo_id: store.solicitud.motivo_solicitud.id, // Añadimos el ID del motivo de la solicitud
         bienes: form.value.detalles.map(d => ({

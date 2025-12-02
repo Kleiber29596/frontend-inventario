@@ -1,39 +1,100 @@
 import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { useToast } from '@/stores/useToast';
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+export const useNotificationStore = defineStore('notification', () => {
+    const router = useRouter();
 
-export const useNotificationStore = defineStore('notification', {
-  state: () => ({
-    solicitudes_pendientes: [], // Ahora es un array para guardar las tarjetas
-    loading: false,
-    // Para controlar el intervalo de actualización
-    pollingInterval: null,
-  }),
+    const unreadCount = ref(0);
+    const notifications = ref([]);
+    const loading = ref(false);
+    let pollingInterval = null;
 
-  actions: {
-    async fetchSummary() {
-      this.loading = true;
-      try {
-        // Este es el endpoint que tu backend debe tener para que esto funcione
-        const response = await axios.get(`${BASE_URL}notificaciones/resumen`); // El backend ahora debe devolver un array
-        this.solicitudes_pendientes = Array.isArray(response.data.solicitudes_pendientes) ? response.data.solicitudes_pendientes : [];
-      } catch (error) {
-        console.error("Error al obtener el resumen de notificaciones:", error);
-        // Reseteamos los contadores en caso de error para no mostrar datos viejos
-        this.solicitudes_pendientes = [];
-      } finally {
-        this.loading = false;
-      }
-    },
+    /**
+     * Obtiene el número de notificaciones no leídas desde la API.
+     */
+    async function fetchUnreadCount() {
+        try {
+            const response = await axios.get('/notificaciones/unread_count');
+            unreadCount.value = response.data.count;
+        } catch (error) {
+            console.error('Error al obtener el conteo de notificaciones:', error);
+            // Opcional: podrías mostrar una alerta si falla repetidamente
+        }
+    }
 
-    startPolling(interval = 30000) { // Actualiza cada 30 segundos
-      this.fetchSummary(); // Llama una vez al inicio
-      this.pollingInterval = setInterval(() => this.fetchSummary(), interval);
-    },
+    /**
+     * Obtiene la lista de notificaciones no leídas.
+     */
+    async function fetchNotifications() {
+        loading.value = true;
+        try {
+            const response = await axios.get('/notificaciones/');
+            notifications.value = response.data;
+        } catch (error) {
+            console.error('Error al obtener las notificaciones:', error);
+            useToast().showToast('No se pudieron cargar las notificaciones.', 'error');
+            notifications.value = [];
+        } finally {
+            loading.value = false;
+        }
+    }
 
-    stopPolling() {
-      clearInterval(this.pollingInterval);
-    },
-  },
+    /**
+     * Marca una notificación como leída y navega a la URL relacionada.
+     * @param {object} notification - El objeto de notificación.
+     */
+    async function markAsReadAndNavigate(notification) {
+        // Optimistic UI update: remove notification from list immediately
+        const index = notifications.value.findIndex(n => n.id === notification.id);
+        if (index !== -1) {
+            notifications.value.splice(index, 1);
+        }
+        if (unreadCount.value > 0) {
+            unreadCount.value--;
+        }
+
+        try {
+            await axios.post(`/notificaciones/${notification.id}/marcar-leida`);
+            // La navegación ocurre después de que la API confirma
+            if (notification.url_relacionada) {
+                router.push(notification.url_relacionada);
+            }
+        } catch (error) {
+            console.error('Error al marcar la notificación como leída:', error);
+            useToast().showToast('Error al actualizar la notificación.', 'error');
+            // Revertir si falla (opcional, pero bueno para la consistencia de datos)
+            fetchNotifications();
+            fetchUnreadCount();
+        }
+    }
+
+    /**
+     * Inicia el polling para verificar nuevas notificaciones periódicamente.
+     */
+    function startPolling() {
+        // Asegurarse de que no haya un intervalo anterior en ejecución
+        if (pollingInterval) clearInterval(pollingInterval);
+
+        fetchUnreadCount(); // Llamada inicial
+        pollingInterval = setInterval(fetchUnreadCount, 60000); // Cada 60 segundos
+    }
+
+    /**
+     * Detiene el polling.
+     */
+    function stopPolling() {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+    }
+
+    return {
+        unreadCount, notifications, loading,
+        fetchUnreadCount, fetchNotifications, markAsReadAndNavigate,
+        startPolling, stopPolling
+    };
 });

@@ -1,7 +1,7 @@
 <template>
     <main class="page-wrapper">
         <!-- Page header -->
-        <HeaderPage :icon="['fas', 'trash-alt']" text="Desincorporaciones" />
+        <HeaderPage :icon="['fas', 'trash-alt']" text="Desincorporaciones" /> 
 
         <div class="page-body mt-3 mb-3">
             <div class="ps-3 pe-3">
@@ -9,7 +9,7 @@
                     <div class="card-header d-flex justify-content-between">
                         <p class="text-secondary m-0">Listado de Asignaciones</p>
                         <div class="d-flex gap-2">
-                            <SearchInput v-model="searchTerm" />
+                            <SearchInput v-model="searchTerm" /> 
                             <button class="btn btn-primary ms-2" @click="openModal()">Nueva Asignacion</button>
                         </div>
                     </div>
@@ -35,13 +35,19 @@
                                         <td>{{ desincorporacion.persona_responsable.primer_nombre + ' ' + desincorporacion.persona_responsable.primer_apellido}}</td>
                                         <td>{{ desincorporacion.fecha_desincorporacion }}</td>
                                             <!-- <button class="btn btn-sm btn-warning" @click="openModal(desincorporacion)">Editar</button> -->
-                                        <td>
-                                            <a class="btn btn-action" @click="openModal(desincorporacion)">
+                                        <td class="d-flex gap-1">
+                                            <a href="#" class="btn btn-action" title="Ver Detalles" @click.prevent="openDetailModal(desincorporacion)">
+                                                <IconEye size="24" stroke-width="1.5" />
+                                            </a>
+                                            <a href="#" class="btn btn-action" title="Generar Acta" @click.prevent="generarActa(desincorporacion)">
+                                                <IconPrinter size="24" stroke-width="1.5" />
+                                            </a>
+                                            <!-- <a class="btn btn-action" @click.prevent="openModal(desincorporacion)">
                                             <IconEdit size="24" stroke-width="1.5" />
                                             </a>
-                                            <a class="btn btn-action" @click="openAdjuntarActaModal(desincorporacion)">
+                                            <a class="btn btn-action" @click.prevent="openAdjuntarActaModal(desincorporacion)" title="Adjuntar Acta">
                                             <IconPaperclip size="24" stroke-width="1.5" />
-                                            </a>
+                                            </a> -->
                                         </td>
                                       
                                     </tr>
@@ -61,6 +67,7 @@
 
         <DesincorporacionForm :desincorporacion="selectedDesincorporacion" @close="closeModal" />
         <AdjuntarActaModal :desincorporacion="selectedDesincorporacionForActa" @close="closeModal" />
+        <DesincorporacionDetailModal :showModal="showDetailModal" :desincorporacionData="selectedDesincorporacionForDetail" @close="closeDetailModal" />
 
     </main>
 </template>
@@ -70,18 +77,24 @@ import { ref, onMounted, watch } from 'vue';
 import { useDesincorporacionStore } from '@/stores/desincorporacionStore';
 import HeaderPage from '@/components/page/header/Component.vue';
 import DesincorporacionForm from '@/components/forms/DesincorporacionForm.vue';
+import DesincorporacionDetailModal from '@/components/modals/DesincorporacionDetailModal.vue'; // 1. Importar el nuevo modal
 import AdjuntarActaModal from '@/components/modals/AdjuntarActaModal.vue';
 import { Modal } from 'bootstrap';
-import { IconEdit, IconArrowBack, IconPaperclip } from '@tabler/icons-vue';
+import { IconEdit, IconArrowBack, IconPaperclip, IconEye, IconPrinter } from '@tabler/icons-vue';
 const store = useDesincorporacionStore();
 const selectedDesincorporacion = ref(null);
 let modalInstance = null;
+
 let adjuntarActaModalInstance = null;
 const selectedDesincorporacionForActa = ref(null);
 import Pagination from '@/components/paginacion/paginacion.vue'
 import SearchInput from '@/components/paginacion/searchInput.vue'
 
 
+
+// --- Estado para el modal de detalles ---
+const showDetailModal = ref(false);
+const selectedDesincorporacionForDetail = ref(null);
 
 // --- Nuevo Estado Local para Paginación/Búsqueda ---
 const currentPage = ref(1);
@@ -117,6 +130,17 @@ const openAdjuntarActaModal = (desincorporacion) => {
     adjuntarActaModalInstance.show();
 };
 
+// 2. Funciones para controlar el modal de detalles
+const openDetailModal = (desincorporacion) => {
+    selectedDesincorporacionForDetail.value = desincorporacion; // Corregido: pasar el objeto completo
+    showDetailModal.value = true;
+};
+
+const closeDetailModal = () => {
+    showDetailModal.value = false;
+    selectedDesincorporacionForDetail.value = null; // Corregido: limpiar la variable correcta
+};
+
 const closeModal = () => {
     modalInstance.hide();
     selectedDesincorporacion.value = null;
@@ -127,10 +151,12 @@ const search = () => {
     store.fetchDesincorporaciones(1, store.searchTerm);
 };
 
-const changePage = (page) => {
-    if (page > 0 && page <= store.paginacion.paginas) {
-        store.fetchDesincorporaciones(page, store.searchTerm);
-    }
+
+const generarActa = (desincorporacion) => {
+    store.generarActaDesincorporacion(desincorporacion);
 };
+
+
+
 
 </script>

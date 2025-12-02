@@ -225,6 +225,30 @@ export const useAsignacionStore = defineStore('asignacion', {
         return [];
       }
     },
+
+
+
+    async generarActaAsignacion(asignacion) {
+      try {
+          const response = await axios.get(`${BASE_URL}asignaciones/acta/${asignacion.id}/acta`, {
+              responseType: 'blob', // Importante para manejar archivos binarios
+          });
     
+          // Crear una URL para el blob y simular un clic para descargar
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `acta_asignacion_${asignacion.id}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+      } catch (error) {
+          console.error("Error al generar el acta:", error);
+          useToast().showToast('Error al generar el acta', 'error');
+      }
+    }
   },
+
+
 });

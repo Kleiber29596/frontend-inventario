@@ -1,8 +1,9 @@
 <template>
     <main class="page-wrapper">
+        <HeaderPage :icon="['fas', 'tasks']" :text="headerText" />
+        
         <!-- Page header -->
         <!-- NOTA: He añadido un nuevo icono 'IconEye' para la acción de visualizar -->
-        <HeaderPage :icon="['fas', 'user-tag']" :text="headerText" />
 
         <div class="page-body mt-3 mb-3">
             <div class="ps-3 pe-3">
@@ -11,7 +12,9 @@
                         <p class="text-secondary m-0">{{ listTitle }}</p>
                         <div class="d-flex gap-2">
                             <SearchInput v-model="searchTerm" />
-                          
+                            <router-link v-if="!isSolicitante" to="/asignaciones/crear" class="btn btn-primary">
+                                Nueva Asignación
+                            </router-link>
                         </div>
                     </div>
                     <div class="card-body">
@@ -23,6 +26,7 @@
                                         <th>usuario del bien</th>
                                         <th>Departamento</th>
                                         <th>Fecha de Inicio</th>
+                                        <th>Motivo</th>
                                         <th>Estatus</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -33,25 +37,30 @@
                                     </tr>
                                     <tr v-for="asignacion in store.asignaciones" :key="asignacion.id">
                                         <td>{{ asignacion.id }}</td>
-                                        <td>{{ asignacion.usuario_bien.primer_nombre}} {{ asignacion.usuario_bien.primer_apellido }}</td>
-                                        <td>{{ asignacion.departamento.nombre }}</td>
+                                        <td>{{ asignacion.usuario_bien ? asignacion.usuario_bien.primer_nombre : 'No asignado' }} {{ asignacion.usuario_bien?.primer_apellido || '' }}</td>
+                                        <td>{{ asignacion.departamento?.nombre || 'No asignado' }}</td>
                                         <td>{{ asignacion.fecha_inicio }}</td>
+                                        <td>{{ asignacion.motivo?.descripcion || 'N/A' }}</td>
                                         <td> <span class="badge" :class="getEstatusClass(asignacion.estatus?.descripcion)">
                                             {{ asignacion.estatus?.descripcion || 'N/A' }}
                                         </span>
                                         </td>
                                         <td>
-                                            <a class="btn btn-action" title="Ver Detalles" @click="openDetallesModal(asignacion.id)">
-                                                <IconEye size="24" stroke-width="1.5" />
-                                            </a>
-                                            <a class="btn btn-action" title="Editar" @click="openModal(asignacion)">
-                                                <IconEdit size="24" stroke-width="1.5" />
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <a class="btn btn-action" title="Registrar Devolución" @click="openDevolucionModal(asignacion)">
-                                            <IconArrowBack size="24" stroke-width="1.5" />
-                                            </a>
+                                            <div class="d-flex">
+                                                <a class="btn btn-action" title="Ver Detalles" @click="openDetallesModal(asignacion.id)">
+                                                    <IconEye size="24" stroke-width="1.5" />
+                                                </a>
+                                                <a class="btn btn-action" title="Editar" @click="openModal(asignacion)">
+                                                    <IconEdit size="24" stroke-width="1.5" />
+                                                </a>
+                                                <a class="btn btn-action" title="Generar Acta" @click="generarActa(asignacion)">
+                                                    <IconPrinter size="24" stroke-width="1.5" />
+                                                </a>
+                                                <a class="btn btn-action" title="Registrar Devolución" @click="openDevolucionModal(asignacion)">
+                                                    <IconArrowBack size="24" stroke-width="1.5" />
+                                                </a>
+                                            </div>
+                                            
                                         </td>
                                     </tr>
                                     <tr v-if="!store.loading && store.asignaciones.length === 0">
@@ -81,12 +90,13 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { useAsignacionStore } from '@/stores/asignacionStore';
 import { useAccountStore } from '@/stores/account.js';
 // import { useAuthStore } from '@/stores/
+import axios from 'axios';
 import HeaderPage from '@/components/page/header/Component.vue';
 import AsignacionForm from '@/components/forms/AsignacionForm.vue';
 import UpdateAsignacionForm from '@/components/forms/UpdateAsignacionForm.vue';
 import DevolucionAsignacionModal from '@/components/modals/DevolucionAsignacionModal.vue';
 import AsignacionDetallesModal from '@/components/modals/AsignacionDetallesModal.vue';
-import { IconEdit, IconArrowBack, IconEye } from '@tabler/icons-vue';
+import { IconEdit, IconArrowBack, IconEye, IconPrinter } from '@tabler/icons-vue';
 import Pagination from '@/components/paginacion/paginacion.vue'
 import SearchInput from '@/components/paginacion/searchInput.vue'
 
@@ -100,6 +110,7 @@ const showDetallesModal = ref(false);
 const selectedAsignacionForDevolucion = ref(null);
 
 
+
 // --- Nuevo Estado Local para Paginación/Búsqueda ---
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -107,7 +118,7 @@ const searchTerm = ref('');
 
 // --- Lógica de Roles ---
 const isSolicitante = computed(() => authStore.user?.rol === 'solicitante');
-const headerText = computed(() => 
+const headerText = computed(() =>
     isSolicitante.value ? `Asignaciones de mi Departamento` : 'Asignaciones'
 );
 const listTitle = computed(() => 
@@ -162,6 +173,10 @@ const openDevolucionModal = (asignacion) => {
     showDevolucionModal.value = true;
 };
 
+const generarActa = (asignacion) => {
+    store.generarActaAsignacion(asignacion);
+};
+
 const closeDevolucionModal = () => {
     showDevolucionModal.value = false;
     selectedAsignacionForDevolucion.value = null;
@@ -183,5 +198,7 @@ const getEstatusClass = (estatus) => {
     if (estatus === 'Finalizada') return 'bg-success';
     return 'bg-secondary';
 };
+
+
 
 </script>

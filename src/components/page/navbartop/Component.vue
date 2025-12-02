@@ -1,5 +1,6 @@
 <template>
     <div class="sidebar pt-3 pb-2 rounded-0 d-none d-lg-block">
+        <!-- NOTA: El componente NotificationBell.vue ya está en NavbarTop.vue, este menú es redundante -->
         <div class="d-flex justify-content-between ps-3 pe-3">
             <div class="d-flex gap-2">
                 <!-- Form search -->
@@ -9,68 +10,8 @@
             <div class="d-flex align-items-center gap-3">
                 <ThemeMode />
 
-                <!-- Menú de Notificaciones Dinámico -->
-                <div class="nav-item dropdown">
-                    <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
-                        aria-label="Show notifications">
-                        <font-awesome-icon :icon="['fas', 'bell']" class="icon-style text-secondary" />
-                        <!-- Punto rojo que aparece si hay notificaciones -->
-                        <span v-if="totalNotificaciones > 0" class="badge bg-red notification-badge">
-                            {{ totalNotificaciones }}
-                        </span>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card">
-                        <div class="card notification-card">
-                            <div class="card-header notification-header">
-                                <h3 class="card-title">Solicitudes Pendientes!</h3>
-                            </div>
-                            <div class="list-group list-group-flush list-group-hoverable">
-
-                                <!-- Notificación de Solicitudes Pendientes -->
-                                <div v-if="totalNotificaciones > 0">
-                                    <div v-for="solicitud in notificationStore.solicitudes_pendientes"
-                                        :key="solicitud.id" class="list-group-item notification-item">
-                                        <RouterLink to="/solicitudes" class="text-decoration-none text-body">
-                                            <div class="row align-items-center">
-                                                <div class="col-auto">
-                                                    <span
-                                                        class="status-dot status-dot-animated bg-red d-block notification-dot"></span>
-                                                </div>
-                                                <div class="col">
-                                                    <div class="fw-bold notification-code">Nro: {{ solicitud.codigo }}</div>
-                                                    <div class="text-muted small notification-department">
-                                                       Departamento: {{ solicitud.departamento_nombre }}
-                                                    </div>
-                                                    <!-- Nuevos elementos para tipo y motivo -->
-                                                    <div class="notification-details mt-2">
-                                                        <span class="notification-tag notification-type">
-                                                            {{ solicitud.tipo }}
-                                                        </span>
-                                                        <span class="notification-tag notification-reason">
-                                                            {{solicitud.motivo }}
-                                                        </span>
-                                                    </div>
-                                                    <div class="text-muted small notification-date">
-                                                        {{ formatRelativeTime(solicitud.fecha_solicitud) }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </RouterLink>
-                                    </div>
-                                </div>
-
-                                <!-- Mensaje si no hay notificaciones -->
-                                <div v-if="totalNotificaciones === 0"
-                                    class="list-group-item text-center text-muted empty-notifications">
-                                    <div class="empty-icon">
-                                        <font-awesome-icon :icon="['fas', 'bell-slash']" />
-                                    </div>
-                                    <div>No hay notificaciones nuevas.</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Componente de Notificaciones -->
+                <NotificationBell />
 
                 <div class="navbar-nav flex-row">
                     <div class="nav-item dropdown">
@@ -99,10 +40,10 @@
 <script setup>
 import FormSearch from './FormSearch.vue'
 import ThemeMode from './ThemeMode.vue'
+import NotificationBell from '@/components/notifications/NotificationBell.vue';
 import avatar from '@/assets/img/perfil_default.png';
 import { RouterLink, useRouter } from 'vue-router'
 import { useNotificationStore } from '@/stores/notificationStore';
-import { onMounted, onUnmounted, computed } from 'vue';
 import { useAccountStore } from '@/stores/account';
 
 const router = useRouter();
@@ -111,27 +52,14 @@ const storeAccount = useAccountStore();
 const notificationStore = useNotificationStore();
 
 // Iniciar y detener la búsqueda de notificaciones cuando el componente se monta/desmonta
-onMounted(() => {
-    notificationStore.startPolling();
-});
-
-onUnmounted(() => {
-    notificationStore.stopPolling();
-});
-
-// Propiedad computada para el total de notificaciones (solo solicitudes)
-const totalNotificaciones = computed(() => {
-    return notificationStore.solicitudes_pendientes.length || 0;
-});
+// El polling ya se inicia en NotificationBell.vue, no es necesario aquí.
 
 async function exit() {
     await storeAccount.logout(router)
 }
 
 // Función para formatear la fecha
-const formatRelativeTime = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
-};
+// Esta función ya no se usa aquí.
 </script>
 
 <style scoped>

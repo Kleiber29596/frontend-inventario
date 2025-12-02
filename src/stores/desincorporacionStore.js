@@ -36,7 +36,6 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
           },
         });
         this.desincorporaciones = response.data.results || [];
-        this.asignaciones = response.data.results || [];
         this.totalItems = response.data.total || 0;
         this.totalPages = response.data.total_pages || 1;
         this.currentPage = response.data.current_page || 1;
@@ -124,6 +123,28 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
       }
     },
 
+    async generarActaDesincorporacion(desincorporacion) {
+      try {
+          const response = await axios.get(`${BASE_URL}desincorporaciones/${desincorporacion.id}/acta`, {
+              responseType: 'blob', // Importante para manejar archivos binarios
+          });
+    
+          // Crear una URL para el blob y simular un clic para descargar
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `acta_desincorporacion_${desincorporacion.id}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+      } catch (error) {
+          console.error("Error al generar el acta:", error);
+          useToast().showToast('Error al generar el acta', 'error');
+      }
+    },
+  
+
     async fetchCatalogosParaFormulario() {
       try {
         const estadosFisicosRes = await axios.get(`${BASE_URL}auxiliares/catalogo-bienes/estados_fisicos/select`);
@@ -153,5 +174,7 @@ export const useDesincorporacionStore = defineStore('desincorporacion', {
         this.loading = false;
       }
     },
+
+    
   },
 });

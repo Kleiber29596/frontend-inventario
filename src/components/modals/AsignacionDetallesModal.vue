@@ -1,5 +1,6 @@
 <template>
     <div v-if="showModal" class="modal fade show d-block" tabindex="-1" @click.self="close">
+        <!-- El modal-dialog-scrollable es útil si el contenido es muy largo -->
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
@@ -21,8 +22,11 @@
                                         <p><strong>Departamento:</strong> {{ asignacion.departamento?.nombre }}</p>
                                         <p><strong>Usuario del Bien:</strong> {{ asignacion.usuario_bien?.primer_nombre }} {{ asignacion.usuario_bien?.primer_apellido }}</p>
                                         <p><strong>Responsable Patrimonial:</strong> {{ asignacion.responsable_patrimonial?.primer_nombre }} {{ asignacion.responsable_patrimonial?.primer_apellido }}</p>
+                                       
+
                                     </div>
                                     <div class="col-md-6">
+                                        <p><strong>Motivo:</strong> {{ asignacion.motivo?.descripcion || 'Sin especificar'  }}</p>
                                         <p><strong>Fecha de Inicio:</strong> {{ asignacion.fecha_inicio }}</p>
                                         <p><strong>Fecha de Fin:</strong> {{ asignacion.fecha_fin || 'Indefinida' }}</p>
                                         <p><strong>Estatus:</strong> <span class="badge" :class="getEstatusClass(asignacion.estatus?.descripcion)">{{ asignacion.estatus?.descripcion }}</span></p>
@@ -51,11 +55,12 @@
                                 <div v-if="!asignacion.devoluciones?.length" class="text-muted">
                                     No se han registrado devoluciones para esta asignación.
                                 </div>
-                                <div v-else class="accordion" id="accordionDevoluciones">
+                                <!-- Añadimos una ref para poder acceder a este elemento desde el script -->
+                                <div v-else class="accordion" id="accordionDevoluciones" ref="accordionContainer">
                                     <div v-for="(devolucion, index) in asignacion.devoluciones" :key="devolucion.id" class="accordion-item">
                                         <h2 class="accordion-header" :id="'heading' + index">
                                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" :data-bs-target="'#collapse' + index">
-                                                Devolución del {{ devolucion.fecha_devolucion }} - Motivo: {{ devolucion.motivo.descripcion }}
+                                                Devolución del {{ formatFecha(devolucion.fecha_devolucion) }} - Motivo: {{ devolucion.motivo.descripcion }}
                                             </button>
                                         </h2>
                                         <div :id="'collapse' + index" class="accordion-collapse collapse" data-bs-parent="#accordionDevoluciones">
@@ -85,6 +90,10 @@
 </template>
 
 <script setup>
+// 1. Importar lo necesario de Vue y Bootstrap
+import { ref, onMounted, onUpdated, nextTick } from 'vue';
+import { Collapse } from 'bootstrap';
+
 defineProps({
     showModal: Boolean,
     asignacion: Object,
@@ -92,6 +101,27 @@ defineProps({
 });
 
 const emit = defineEmits(['close']);
+
+// 2. Crear una referencia para el contenedor del acordeón
+const accordionContainer = ref(null);
+
+// 3. Función para inicializar los acordeones
+const initializeAccordions = () => {
+    if (accordionContainer.value) {
+        // Buscamos todos los botones que controlan un collapse dentro de nuestro contenedor
+        const collapseElements = accordionContainer.value.querySelectorAll('[data-bs-toggle="collapse"]');
+        // Por cada botón, creamos una nueva instancia de Collapse de Bootstrap.
+        // Esto asegura que Bootstrap les añada los eventos de click necesarios.
+        collapseElements.forEach(el => {
+            // El segundo argumento { toggle: false } evita que se abran solos al inicializar.
+            new Collapse(document.querySelector(el.dataset.bsTarget), { toggle: false });
+        });
+    }
+};
+
+// 4. Usar los hooks del ciclo de vida de Vue
+onMounted(initializeAccordions);
+onUpdated(initializeAccordions);
 
 const close = () => {
     emit('close');
@@ -102,5 +132,15 @@ const getEstatusClass = (estatus) => {
     if (estatus === 'Finalizada') return 'bg-success';
     if (estatus === 'Parcialmente Devuelta') return 'bg-warning';
     return 'bg-secondary';
+};
+
+// Define or import the formatFecha function
+const formatFecha = (fecha) => {
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
 };
 </script>
