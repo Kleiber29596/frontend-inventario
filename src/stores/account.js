@@ -811,12 +811,17 @@ export const useAccountStore = defineStore('account', {
 // Configura los interceptores de Axios para verificar el token automáticamente
 axios.interceptors.request.use(
     (config) => {
-        // Lee el sessionStorage en cada petición para obtener el token más reciente.
         const userString = sessionStorage.getItem("user");
         if (userString) {
             const userData = JSON.parse(userString);
             if (userData && userData.token) {
                 config.headers.Authorization = `Bearer ${userData.token}`;
+            }
+        }
+        // Si la petición es FormData, no se debe tocar el Content-Type.
+        if (config.data instanceof FormData) {
+            if (config.headers) {
+                delete config.headers['Content-Type'];
             }
         }
         return config;

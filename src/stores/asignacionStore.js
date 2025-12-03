@@ -202,10 +202,15 @@ export const useAsignacionStore = defineStore('asignacion', {
     async createDevolucion(payload) {
       this.loading = true;
       try {
+        // CORRECCIÓN: Usamos la URL original y nos aseguramos de que el interceptor no interfiera.
+        // No es necesario establecer 'Content-Type' aquí si el interceptor está corregido.
+        // El navegador lo manejará automáticamente al detectar FormData.
         const response = await axios.post(`${BASE_URL}asignaciones/devolucion`, payload, {
-            // headers: { 'Authorization': `Bearer ${this.authStore.token}` } // Si usas autenticación
+          // No se necesitan headers especiales aquí, el interceptor se encargará.
         });
+
         useToast().showToast('Devolución registrada correctamente.');
+        this.fetchAsignaciones(this.currentPage); // Refrescar la lista para ver los cambios
         return response.data;
       } catch (error) {
         const errorMessage = error.response?.data?.detail || 'Error al registrar la devolución.';

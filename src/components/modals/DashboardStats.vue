@@ -218,7 +218,7 @@ const chartOptionsLineal = computed(() => {
         xaxis: {
             type: 'datetime',
             labels: {
-                format: 'dd MMM yy'
+                format: 'dd/MM/yy'
             }
         },
         yaxis: {

@@ -39,7 +39,7 @@
                                         <td>{{ asignacion.id }}</td>
                                         <td>{{ asignacion.usuario_bien ? asignacion.usuario_bien.primer_nombre : 'No asignado' }} {{ asignacion.usuario_bien?.primer_apellido || '' }}</td>
                                         <td>{{ asignacion.departamento?.nombre || 'No asignado' }}</td>
-                                        <td>{{ asignacion.fecha_inicio }}</td>
+                                        <td>{{ new Date(asignacion.fecha_inicio).toLocaleDateString('es-ES') }}</td>
                                         <td>{{ asignacion.motivo?.descripcion || 'N/A' }}</td>
                                         <td> <span class="badge" :class="getEstatusClass(asignacion.estatus?.descripcion)">
                                             {{ asignacion.estatus?.descripcion || 'N/A' }}

@@ -40,7 +40,7 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="fecha_inicio" class="form-label">Fecha de Inicio</label>
-                            <input type="date" class="form-control" id="fecha_inicio" v-model="form.fecha_inicio">
+                            <input type="date" class="form-control" id="fecha_inicio" v-model="form.fecha_inicio" :min="today">
                         </div>
 
                         <div class="col-md-4 mb-3">
@@ -75,8 +75,8 @@
                         <p><strong>Departamento:</strong> {{ form.departamento_id?.nombre || 'No seleccionado' }}</p>
                         <p><strong>Responsable:</strong> {{ form.responsable_patrimonial?.primer_nombre}} {{ form.responsable_patrimonial?.primer_apellido || 'No seleccionado'}}</p>
                         <p><strong>Usuario del Bien:</strong> {{ form.usuario_bien?.nombres_apellidos || 'No asignado (General del Depto.)' }}</p>
-                        <p><strong>Fecha de Inicio:</strong> {{ form.fecha_inicio || 'No especificada' }}</p>
-                        <p><strong>Fecha de fin:</strong> {{ form.fecha_fin || 'Indeterminada' }}</p>
+                        <p><strong>Fecha de Inicio:</strong> {{ formatDisplayDate(form.fecha_inicio) || 'No especificada' }}</p>
+                        <p><strong>Fecha de fin:</strong> {{ formatDisplayDate(form.fecha_fin) || 'Indeterminada' }}</p>
                         <p><strong>Motivo:</strong> {{ getMotivoNombre }}</p>
                         <hr>
                         <h5>Bienes Seleccionados ({{ form.bienes_id.length }})</h5>
@@ -130,11 +130,18 @@ const steps = ref([
     { id: 3, title: 'Resumen y Confirmación' }
 ]);
 
+// ✅ NUEVO: Propiedad computada para obtener la fecha de hoy en formato YYYY-MM-DD.
+// Esto se usará para el atributo `min` del input de fecha.
+const today = computed(() => new Date().toISOString().slice(0, 10));
+
 // Computed para validaciones
 const canProceed = computed(() => {
     switch (currentStep.value) {
         case 1:
-            return form.value.departamento_id && form.value.fecha_inicio;
+            // ✅ MEJORA: Se añade la validación de la fecha de inicio.
+            // No debe ser una fecha pasada. Comparamos solo la parte de la fecha.
+            const fechaInicioValida = form.value.fecha_inicio && form.value.fecha_inicio >= today.value;
+            return form.value.departamento_id && fechaInicioValida;
         case 2:
             return form.value.bienes_id.length > 0;
         default:
@@ -191,21 +198,25 @@ const form = ref({
 });
 
 watch(() => form.value.departamento_id, (newVal, oldVal) => {
-    const newDepId = newVal?.id;
-    const oldDepId = oldVal?.id;
-
-    if (newDepId !== oldDepId) {
-        form.value.usuario_bien = null;
-        // Limpiamos el responsable anterior
+    // CORRECCIÓN: Se ajusta la lógica para comparar IDs de forma segura,
+    // incluso si newVal u oldVal son null.
+    if (newVal?.id !== oldVal?.id) { 
+        // Solo reseteamos el usuario si no estamos cargando desde una solicitud.
+        // Si `solicitud_id` existe, significa que el valor ya fue pre-cargado
+        // y no queremos borrarlo. El usuario podrá cambiarlo manualmente si lo desea.
+        if (!form.value.solicitud_id) {
+            form.value.usuario_bien = null;
+        }
         form.value.responsable_patrimonial = null; 
     }
 
-    if (newDepId) {
+    if (newVal?.id) {
         // Si el nuevo departamento tiene un responsable, lo asignamos.
         if (newVal.responsable_patrimonial) {
             form.value.responsable_patrimonial = newVal.responsable_patrimonial;
         }
-        store.fetchPersonasPorDepartamento(newDepId);
+        // Se llama a la acción del store para cargar las personas del departamento seleccionado.
+        store.fetchPersonasPorDepartamento(newVal.id);
     }
 }, { deep: true });
 
@@ -223,6 +234,15 @@ const prevStep = () => {
     if (currentStep.value > 1) {
         currentStep.value--;
     }
+};
+
+// Función para formatear fechas para visualización
+const formatDisplayDate = (dateString) => {
+    if (!dateString) return null;
+    // Aseguramos que la fecha se interprete como UTC para evitar problemas de zona horaria
+    const date = new Date(`${dateString}T00:00:00Z`);
+    // Usamos toLocaleDateString para un formato localizado y seguro
+    return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
 };
 
 const handleSubmit = async () => {

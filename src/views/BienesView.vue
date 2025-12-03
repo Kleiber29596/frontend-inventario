@@ -48,7 +48,7 @@
                   <td>{{ bien.marca.descripcion }}</td>
                   <td>{{ bien.modelo.descripcion }}</td>
                   <td>{{ bien.estado_fisico.nombre }}</td>
-                  <td>{{ bien.fecha_adquisicion }}</td>
+                  <td>{{ formatDate(bien.fecha_adquisicion) }}</td>
                   <td> <span class="badge" :class="getEstatusClass(bien.estatus?.descripcion)">
                       {{ bien.estatus?.descripcion || 'N/A' }}
                     </span>
@@ -180,5 +180,12 @@ const getEstatusClass = (estatus) => {
     default:
       return 'bg-secondary';
   }
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  // Aseguramos que la fecha se interprete como UTC para evitar problemas de zona horaria
+  const date = new Date(`${dateString}T00:00:00Z`);
+  return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
 };
 </script>

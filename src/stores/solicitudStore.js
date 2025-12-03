@@ -161,5 +161,20 @@ export const useSolicitudStore = defineStore('solicitud', {
         this.loading = false;
       }
     },
+
+    async rechazarSolicitud(id) {
+      this.loading = true;
+      try {
+        await axios.put(`${BASE_URL}solicitudes-bienes/${id}/rechazar`);
+        useToast().showToast('Solicitud rechazada exitosamente');
+        await this.fetchSolicitudes();
+      } catch (error) {
+        console.error("Error al rechazar la solicitud:", error);
+        useToast().showToast('Error al rechazar la solicitud', 'error');
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
   },
 });

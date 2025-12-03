@@ -95,7 +95,7 @@
                                     <p><strong>Departamento:</strong> {{ store.solicitud.departamento_solicitante.nombre }}</p>
                                     <p><strong>Solicitante:</strong> {{ `${store.solicitud.solicitante.persona.primer_nombre} ${store.solicitud.solicitante.persona.primer_apellido}` }}</p>
                                     <p><strong>Motivo:</strong> {{ store.solicitud.motivo_solicitud.descripcion }}</p>
-                                    <p><strong>Fecha de Desincorporación:</strong> {{ form.fecha_desincorporacion }}</p>
+                                    <p><strong>Fecha de Desincorporación:</strong> {{ formatDisplayDate(form.fecha_desincorporacion) }}</p>
                                     <hr>
                                     <h5>Bienes a Desincorporar</h5>
                                     <ul class="list-group">
@@ -203,6 +203,14 @@ const getCondicionNombre = (id) => {
 const cancel = () => router.push('/desincorporaciones');
 const nextStep = () => { if (currentStep.value < 3 && canProceed.value) currentStep.value++; };
 const prevStep = () => { if (currentStep.value > 1) currentStep.value--; };
+
+// Función para formatear fechas para visualización
+const formatDisplayDate = (dateString) => {
+    if (!dateString) return null;
+    // Aseguramos que la fecha se interprete como UTC para evitar problemas de zona horaria
+    const date = new Date(`${dateString}T00:00:00Z`);
+    return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+};
 
 const handleSubmit = async () => {
     if (!canSubmit.value) {

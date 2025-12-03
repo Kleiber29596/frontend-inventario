@@ -234,6 +234,13 @@ const validateForm = () => {
     return false;
   }
 
+  // Validar que la fecha de adquisición no sea futura
+  const today = new Date().toISOString().slice(0, 10);
+  if (form.fecha_adquisicion > today) {
+    error.value = 'La fecha de adquisición no puede ser futura.';
+    return false;
+  }
+
   console.log('✅ Todas las validaciones pasaron');
   return true;
 };

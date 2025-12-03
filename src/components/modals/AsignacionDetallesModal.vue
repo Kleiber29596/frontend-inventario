@@ -27,8 +27,8 @@
                                     </div>
                                     <div class="col-md-6">
                                         <p><strong>Motivo:</strong> {{ asignacion.motivo?.descripcion || 'Sin especificar'  }}</p>
-                                        <p><strong>Fecha de Inicio:</strong> {{ asignacion.fecha_inicio }}</p>
-                                        <p><strong>Fecha de Fin:</strong> {{ asignacion.fecha_fin || 'Indefinida' }}</p>
+                                        <p><strong>Fecha de Inicio:</strong> {{ formatSimpleDate(asignacion.fecha_inicio) }}</p>
+                                        <p><strong>Fecha de Fin:</strong> {{ formatSimpleDate(asignacion.fecha_fin) || 'Indefinida' }}</p>
                                         <p><strong>Estatus:</strong> <span class="badge" :class="getEstatusClass(asignacion.estatus?.descripcion)">{{ asignacion.estatus?.descripcion }}</span></p>
                                     </div>
                                 </div>
@@ -66,10 +66,24 @@
                                         <div :id="'collapse' + index" class="accordion-collapse collapse" data-bs-parent="#accordionDevoluciones">
                                             <div class="accordion-body">
                                                 <p><strong>Responsable que entrega:</strong> {{ devolucion.persona_responsable.primer_nombre }} {{ devolucion.persona_responsable.primer_apellido }}</p>
+                                                
+                                                <!-- Mostrar enlace al informe técnico si existe -->
+                                                <p v-if="devolucion.informe_tecnico_url">
+                                                    <strong>Informe Técnico:</strong>
+                                                    <a :href="getInformeUrl(devolucion.informe_tecnico_url)" target="_blank" rel="noopener noreferrer" class="ms-2">
+                                                        Ver Documento <i class="ti ti-external-link"></i>
+                                                    </a>
+                                                </p>
                                                 <h6>Bienes Devueltos:</h6>
                                                 <ul class="list-group">
                                                     <li v-for="item in devolucion.bienes_devueltos" :key="item.id" class="list-group-item">
-                                                        {{ item.bien.serial_bien }} - Condición: <span class="badge bg-secondary">{{ item.condicion_retorno.nombre }}</span>
+                                                        <div>{{ item.bien.serial_bien }} - Condición: <span class="badge bg-secondary">{{ item.condicion_retorno.nombre }}</span></div>
+                                                        <!-- ✅ NUEVO: Mostrar observaciones si existen -->
+                                                        <div v-if="item.observaciones" class="mt-2">
+                                                            <small class="text-muted">Observaciones:</small>
+                                                            <p class="mb-0 fst-italic">"{{ item.observaciones }}"</p>
+                                                        </div>
+                                                        <!-- ✅ FIN DEL NUEVO BLOQUE -->
                                                     </li>
                                                 </ul>
                                             </div>
@@ -136,11 +150,29 @@ const getEstatusClass = (estatus) => {
 
 // Define or import the formatFecha function
 const formatFecha = (fecha) => {
+    if (!fecha) return '';
     const date = new Date(fecha);
-    return date.toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
+    return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+};
+
+// Función para formatear fechas YYYY-MM-DD a dd/mm/yy
+const formatSimpleDate = (dateString) => {
+    if (!dateString) return null;
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year.slice(-2)}`;
+};
+
+// Función para construir la URL completa del informe técnico
+const getInformeUrl = (relativePath) => {
+    // Obtiene la URL base de la API desde las variables de entorno de Vite.
+    // Si la variable no está definida, usa un valor por defecto para el entorno de desarrollo.
+    // Esto hace el código más robusto.
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+
+    // Asegurarnos de que la ruta relativa no tenga una barra al principio si la base ya la tiene al final
+    const cleanRelativePath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+
+    return `${cleanBaseUrl}${cleanRelativePath}`;
 };
 </script>
